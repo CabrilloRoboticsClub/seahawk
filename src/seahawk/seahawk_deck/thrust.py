@@ -221,7 +221,7 @@ class Thrust(Node):
         x = list()
         y = list()
 
-        with open("src/seahawk/seahawk_deck/thrust_to_current.tsv", "r") as file:
+        with open("thrust_to_current.tsv", "r") as file:
             for data_point in file:
                 data = data_point.split("\t")
                 x.append(data[0])
@@ -296,7 +296,7 @@ class Thrust(Node):
         x = []
         y = []
 
-        with open("src/seahawk/seahawk_deck/newtons_to_pwm.tsv", "r") as file:
+        with open("newtons_to_pwm.tsv", "r") as file:
             for data_point in file:
                 data = data_point.split("\t")
                 x.append(data[0])
@@ -326,10 +326,18 @@ class Thrust(Node):
             pwm_values.data[index] = 1900 if pwm_values.data[index] > 1900 else 1100 if pwm_values.data[index] < 1100 else pwm_values.data[index]
             if newton == 0: pwm_values.data[index] = 1500
         self.pwm_pub.publish(pwm_values)
+    
+    def __del__(self):
+        pwm_values = Int16MultiArray()
+        pwm_values.data = [1500] * 8
+        self.pwm_pub.publish(pwm_values)
+
 
 def main(args=None):
     rclpy.init(args=args)
-    rclpy.spin(Thrust())
+    node = Thrust()
+    rclpy.spin(node)
+    del node
     rclpy.shutdown()    
 
 
