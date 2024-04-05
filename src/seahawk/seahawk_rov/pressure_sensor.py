@@ -4,6 +4,8 @@ from rclpy import Node
 import ms5837
 from ms5837 import MS5837_02BA(bus=1)
 
+from std_msgs.msg import String
+
 class PressureReading (Node):
     def __init__(self):
         super().__init__('pressure_publisher')  # what?
