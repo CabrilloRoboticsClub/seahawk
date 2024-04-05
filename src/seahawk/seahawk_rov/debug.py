@@ -3,6 +3,7 @@
 debug.py
 
 Publish RPi4 Debug info to /debug_info
+Also setup anything on the pi that needs to run upon start-up
 
 Copyright (C) 2023-2024 Cabrillo Robotics Club
 
@@ -27,20 +28,36 @@ import rclpy
 import psutil
 from time import time
 from psutil._common import bytes2human
-from rclpy.node import Node 
+from rclpy.node import Node
+import RPi.GPIO as GPIO
 from seahawk_msgs.msg import DebugInfo
+
 
 class Debug(Node):
     """
     Reads system information from RPi4 and publishes it.
+    Also setup anything on the pi that needs to run upon start-up.
     """
     def __init__(self):
         super().__init__("debug")
+        # Setup node
         self._publisher = self.create_publisher(DebugInfo, "debug_info", 10)
         self.timer = self.create_timer(0.5, self.pub_callback) 
+        self.pins = {
+            "fan":      27,
+        }
+
+        # Setup pi
+        # Set fan GPIO pin to out
+        GPIO.setup(self.pins["fan"], GPIO.OUT)
+        # Set fan to high so it turns on
+        GPIO.output(self.pins["fan"], GPIO.HIGH)
+
+        # Setup for debug information
         net = psutil.net_io_counters()
         self.sent = net.bytes_sent
         self.recv = net.bytes_recv
+
     
     def pub_callback(self):
         msg = DebugInfo()
@@ -71,10 +88,18 @@ class Debug(Node):
 
         self._publisher.publish(msg)
 
+    def __del__(self):
+        """
+        "Destructor" for node. Cleans up pins when we are done with them.
+        """
+        GPIO.cleanup()
+
+
 def main(args=None):
     rclpy.init(args=args)
-    debug_node = Debug()
-    rclpy.spin(debug_node)
+    node = Debug()
+    rclpy.spin(node)
+    del node
     rclpy.shutdown()
 
 if __name__ == "__main__":
