@@ -36,6 +36,9 @@ from rcl_interfaces.msg import SetParametersResult
 
 from scipy.optimize import curve_fit
 import numpy as np
+from os import path
+
+PATH = path.dirname(__file__)
 
 class Thrust(Node):
     """
@@ -221,7 +224,7 @@ class Thrust(Node):
         x = list()
         y = list()
 
-        with open("thrust_to_current.tsv", "r") as file:
+        with open(PATH + "/thrust_to_current.tsv", "r") as file:
             for data_point in file:
                 data = data_point.split("\t")
                 x.append(data[0])
@@ -296,7 +299,7 @@ class Thrust(Node):
         x = []
         y = []
 
-        with open("newtons_to_pwm.tsv", "r") as file:
+        with open(PATH + "/newtons_to_pwm.tsv", "r") as file:
             for data_point in file:
                 data = data_point.split("\t")
                 x.append(data[0])
