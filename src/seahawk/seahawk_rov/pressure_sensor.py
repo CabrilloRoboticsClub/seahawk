@@ -10,13 +10,13 @@ class PressureReading (Node):
         self.pressure_publisher_ = self.create_publisher(Pressure, 'pressure_topic', 10)  # create a publisher that publishes messages of type String to pressure_topic
         self.depth_publisher_ = self.create_publisher(Depth, 'depth_topic', 10)  # create a publisher that publishes messages of type Depth
 
-        sensor = ms5837.MS5837() # might need to specify model
+        sensor = ms5837.MS5837()  # might need to specify model?
         sensor.init()  # initialize the sensor
-        water_density = ms5837.DENSITY_FRESHWATER  # set value for the density of water
+        water_density = ms5837.DENSITY_FRESHWATER  # set value for the density of fresh water
         g = 9.81  # gravitational acceleration in m/s^2
-        sensor.setFluidDensity(ms5837.DENISTY_FRESHWATER)  # Set fluid density 997 kg/m^3
+        sensor.setFluidDensity(water_density)  # Set fluid density 997 kg/m^3
         pascal = ms5837.UNITS_Pa
-        
+
         timer_period = 0.5  # space messages out by 0.5 seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)  # create a timer for when the messages are published to topic
 
@@ -28,11 +28,11 @@ class PressureReading (Node):
         self.pressure_publisher_.publish(pressure_msg)  # publish pressure_msg to pressure_topic
 
         depth_msg = Depth()  # create object of type Depth
-        depth_data = pressure_data / (water_density * g)  # getting depth using formula d = pg(roh)
-        depth_msg.data = depth_data  # det the depth_msgs data to the calculated depth
+        depth_data  = sensor.depth()
+        # depth_data = pressure_data / (water_density * g)  # getting depth using formula d = p/(roh * g)
+        depth_msg.data = depth_data  # set the depth_msgs data to the calculated depth
         self.depth_publisher_.publish(depth_msg)  # publish depth_msg to depth_topic
 
-        
 
 
 def main(args=None):
