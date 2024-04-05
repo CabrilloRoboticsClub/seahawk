@@ -44,14 +44,9 @@ class Debug(Node):
         self._publisher = self.create_publisher(DebugInfo, "debug_info", 10)
         self.timer = self.create_timer(0.5, self.pub_callback) 
         self.pins = {
-            "fan":      27,
+            # Analog pin, anywhere past 50 be concerned
+            "leak_detector_pcb": 17,
         }
-
-        # Setup pi
-        # Set fan GPIO pin to out
-        GPIO.setup(self.pins["fan"], GPIO.OUT)
-        # Set fan to high so it turns on
-        GPIO.output(self.pins["fan"], GPIO.HIGH)
 
         # Setup for debug information
         net = psutil.net_io_counters()
