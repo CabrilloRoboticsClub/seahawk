@@ -335,13 +335,14 @@ class Thrust(Node):
         pwm_values.data = [1500] * 8
         self.pwm_pub.publish(pwm_values)
 
-
 def main(args=None):
     rclpy.init(args=args)
     node = Thrust()
-    rclpy.spin(node)
-    del node
-    rclpy.shutdown()    
+    try: 
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        del node
+        rclpy.shutdown()    
 
 
 if __name__ == "__main__":

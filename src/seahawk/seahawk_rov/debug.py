@@ -93,9 +93,11 @@ class Debug(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = Debug()
-    rclpy.spin(node)
-    del node
-    rclpy.shutdown()
+    try: 
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        del node
+        rclpy.shutdown()
 
 if __name__ == "__main__":
     main()
