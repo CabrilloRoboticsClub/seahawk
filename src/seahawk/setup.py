@@ -7,7 +7,7 @@ package_name = 'seahawk'
 setup(
     name=package_name,
     version='0.0.1',
-    packages=['seahawk_deck', 'seahawk_rov'],
+    packages=['seahawk_deck', 'seahawk_rov', 'seahawk_deck.dash_styling', 'seahawk_deck.dash_widgets'],
     data_files=[
         ('share/ament_index/resource_index/packages', ['resources/' + package_name]),
         (os.path.join('share', package_name), ['package.xml']),
@@ -24,11 +24,13 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            "debug=seahawk_rov.debug:main",
+            "claws=seahawk_rov.claws:main",
             "thrust=seahawk_deck.thrust:main",
             "pilot_input=seahawk_deck.pilot_input:main",
-            "keyboard=seahawk_deck.keyboard:main",
             "rviz_markers=seahawk_deck.rviz_markers:main",
-            'seahawk_rov = seahawk_rov:main'
+            'seahawk_rov = seahawk_rov:main',
+            "dash=seahawk_deck.dash:main"
         ],
     },
 )

@@ -8,17 +8,17 @@ from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Quaternion
 from visualization_msgs.msg import Marker, MarkerArray
 
-class MarkerMaker(Node):
+class RvizMarkers(Node):
     """
     Node to visualize the motor controls of the robot using RViz markers
     """
 
     def __init__(self):
         """
-        Initialize 'marker_maker' node
+        Initialize 'rviz_markers' node
         """
         # Set up node and pub/sub
-        super().__init__("marker_maker")
+        super().__init__("rviz_markers")
         self.marker_pub = self.create_publisher(MarkerArray, "motor_debug", 10)
         self.subscription = self.create_subscription(Float32MultiArray, "motor_values", self.callback, 10)
 
@@ -131,7 +131,7 @@ class MarkerMaker(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    rclpy.spin(MarkerMaker())
+    rclpy.spin(RvizMarkers())
     rclpy.shutdown()    
 
 
