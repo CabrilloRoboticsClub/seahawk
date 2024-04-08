@@ -30,11 +30,6 @@ from machine import Pin
 import onewire
 
 
-# The device is on GPIO12 #TODO: Ask isaac what pins are avliable
-PIN_NUM = 12
-PIN = Pin(PIN_NUM, Pin.OUT)
-
-
 class DS18B20(Node):
     """
     Class which reads temperature data from DS18B20
@@ -48,6 +43,10 @@ class DS18B20(Node):
         self.pub_temp = self.create_publisher(Float64, "DS18B20", 10)
         # Timer that waits one second between sensor reading/publish
         self.create_timer(1, self.pub_callback)
+        
+        # The device is on GPIO7
+        PIN_NUM = 7
+        PIN = Pin(PIN_NUM, Pin.OUT)
         # Create one wire object for DS18B20 sensor
         self.DS18B20_ow = onewire.DS18B20(onewire.OneWire(PIN))
         # Scan for devices on the bus
