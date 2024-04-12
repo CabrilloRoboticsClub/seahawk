@@ -27,6 +27,7 @@ import sys
 import rclpy
 from rclpy.node import Node
 from seahawk_msgs.msg import Bme280
+from seahawk_msgs.msg import PressureSensor
 
 from sensor_msgs.msg import Imu
 import adafruit_bno08x
@@ -35,8 +36,6 @@ from adafruit_bme280 import basic as adafruit_bme280
 
 import ms5837
 from ms5837 import MS5837_02BA(bus=1)
-
-from std_msgs.msg import String
 
 import board
 import busio
@@ -67,11 +66,10 @@ class I2C(Node):
         self.bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c_bus=i2c, address=0x76)
 
         # PRESSURE SENSOR
-        super().__init__('pressure_publisher')  # what?
-        self.pressure_publisher_ = self.create_publisher(Pressure, 'pressure_topic', 10)  # create a publisher that publishes messages of type String to pressure_topic
-        self.depth_publisher_ = self.create_publisher(Depth, 'depth_topic', 10)  # create a publisher that publishes messages of type Depth
+        self.pressure_publisher_ = self.create_publisher(PressureSensor, 'pressure_topic', 10)  # create a publisher that publishes messages of type String to pressure_topic
 
-        sensor = ms5837.MS5837()  # might need to specify model?
+        sensor = ms5837.MS5837(model=ms5837.MS5837_MODEL_30BA, i2c_bus=i2c) # Specify model and bus
+
         sensor.init()  # initialize the sensor
 
         if not sensor.init():
@@ -121,18 +119,11 @@ class I2C(Node):
         self.bme_pub.publish(msg)
 
     def pressure_callback(self):
-        pressure_msg = Pressure()  # create a obj of type Pressure
-        
-        pressure_data = sensor.pressure(pascal)
-        pressure_msg.data = pressure_data  # Get pressure data and give it to msg
-        self.pressure_publisher_.publish(pressure_msg)  # publish pressure_msg to pressure_topic
+        pressure_msg = PressureSensor()  # create a obj of type Pressure
+        pressure_msg.pressure = sensor.pressure(pascal)
 
-        depth_msg = Depth()  # create object of type Depth
-        depth_data  = sensor.depth()
-        # depth_data = pressure_data / (water_density * g)  # getting depth using formula d = p/(roh * g)
-        depth_msg.data = depth_data  # set the depth_msgs data to the calculated depth
-        self.depth_publisher_.publish(depth_msg)  # publish depth_msg to depth_topic
-
+        pressure_msg.depth sensor.depth()
+        self.pressure_publisher_.publish(pressure_msg)  # publish depth_msg to depth_topic
 
 
 def main(args=None):
