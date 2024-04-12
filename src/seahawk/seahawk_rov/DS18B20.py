@@ -25,10 +25,12 @@ cabrillorobotics@gmail.com
 
 import rclpy
 from rclpy.node import Node
+import board
 from std_msgs.msg import Float64
-from machine import Pin
-import onewire
+from adafruit_onewire.bus import OneWireBus
+from adafruit_ds18x20 import DS18X20
 
+# https://learn.adafruit.com/using-ds18b20-temperature-sensor-with-circuitpython/circuitpython
 
 class DS18B20(Node):
     """
@@ -41,32 +43,23 @@ class DS18B20(Node):
         """
         super().__init__("DS18B20")
         self.pub_temp = self.create_publisher(Float64, "DS18B20", 10)
+        
         # Timer that waits one second between sensor reading/publish
         self.create_timer(1, self.pub_callback)
         
-        # The device is on GPIO7
-        PIN_NUM = 7
-        PIN = Pin(PIN_NUM, Pin.OUT)
-        # Create one wire object for DS18B20 sensor
-        self.DS18B20_ow = onewire.DS18B20(onewire.OneWire(PIN))
-        # Scan for devices on the bus
-        self.roms = self.DS18B20_ow.scan()
-        # First instance of converting the temp
-        self.DS18B20_ow.convert_temp()
+        # Device is on pin 7
+        self.ow_bus = OneWireBus(board.D7)
+
+       # Scan for sensors and grab the first one found
+        self.DS18B20 = DS18X20(self.ow_bus, self.ow_bus.scan()[0])
 
     def pub_callback(self):
         """
         Read temperature from DS18B20 senor then publish it to 'DS18B20' topic
         """
         msg = Float64()
-        for rom in self.roms:
-            msg.data = self.DS18B20_ow.read_temp(rom)
+        msg.data = self.DS18B20.temperature
         self.pub_temp.publish(msg)
-        # Must execute the convert_temp() function to initiate a temperature reading,
-        # then wait at least 750ms before reading the value. By putting this call at
-        # the end of the pub_callback() so it waits a second before the function is 
-        # called again due to the timer
-        self.DS18B20_ow.convert_temp()
 
 
 def main(args=None):
