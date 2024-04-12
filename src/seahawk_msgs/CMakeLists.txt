@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DebugInfo.msg"
   "msg/InputStates.msg"
   "msg/ClawStates.msg"
+  "msg/Bme280.msg"
 )
 
 ament_package()

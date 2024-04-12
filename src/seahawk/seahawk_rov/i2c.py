@@ -25,11 +25,13 @@ cabrillorobotics@gmail.com
 
 import sys
 import rclpy
-
 from rclpy.node import Node
+from seahawk_msgs.msg import Bme280
+
 from sensor_msgs.msg import Imu
 import adafruit_bno08x
 from adafruit_bno08x.i2c import BNO08X_I2C
+from adafruit_bme280 import basic as adafruit_bme280
 
 import board
 import busio
@@ -47,7 +49,7 @@ class I2C(Node):
         # Grab the i2c interface for us to use
         i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
         
-        # IMU stuff
+        # IMU
         self.imu_pub = self.create_publisher(Imu, "imu", 10)
         self.bno085 = BNO08X_I2C(i2c_bus=i2c, address=0x4a)
         # enable raw data outputs
@@ -55,13 +57,14 @@ class I2C(Node):
         self.bno.enable_feature(adafruit_bno08x.BNO_REPORT_GYROSCOPE)
         self.bno.enable_feature(adafruit_bno08x.BNO_REPORT_LINEAR_ACCELERATION)
 
+        # BME280
+        self.bme_pub = self.create_publisher(Bme280, "bme280", 10)
+        self.bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c_bus=i2c, address=0x76)
+
     def imu_callback(self):
         msg = Imu()
         msg.header.frame_id = "bno085"
 
-        # load the message with data from the sensor
-        # IMU X right, Y forward, Z up
-        # ROS Y left, X forward, Z up
         msg.orientation.x = self.bno085.geomagnetic_quaternion[1]
         msg.orientation.y = -self.bno085.geomagnetic_quaternion[0]
         msg.orientation.z = self.bno085.geomagnetic_quaternion[2]
@@ -78,23 +81,19 @@ class I2C(Node):
             self.imu_pub.publish(msg)
         except:
             self.node.get_logger().info("Warning: IMU failed to publish")
-
-       
-    def __del__(self):
-        """
-        "Destructor" for node. Cleans up pins when we are done with them.
-        """
-        pass
+        
+    def bme_callback(self):
+        msg = Bme280()
+        msg.temperature = self.bme280.temperature
+        msg.humidity = self.bme280.humidity
+        msg.pressure = self.bme280.pressure
+        self.bme_pub.publish(msg)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = I2C()
-    try: 
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        del node
-        rclpy.shutdown()
+    rclpy.spin(I2C())
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":
