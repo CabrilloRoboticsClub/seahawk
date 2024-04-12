@@ -33,6 +33,11 @@ import adafruit_bno08x
 from adafruit_bno08x.i2c import BNO08X_I2C
 from adafruit_bme280 import basic as adafruit_bme280
 
+import ms5837
+from ms5837 import MS5837_02BA(bus=1)
+
+from std_msgs.msg import String
+
 import board
 import busio
 
