@@ -103,6 +103,17 @@ class PressureReading (Node):
 
         sensor = ms5837.MS5837()  # might need to specify model?
         sensor.init()  # initialize the sensor
+
+        if not sensor.init():
+            print("SENSOR READ FAILED.")
+            exit(1)
+
+        sensor.read(ms5837.OSR_256)  # Read the sensor and update the pressure and temperature.
+
+        if not sensor.read():
+            print("SENSOR READ FAILED.")
+            exit(1)
+        
         water_density = ms5837.DENSITY_FRESHWATER  # set value for the density of fresh water
         g = 9.81  # gravitational acceleration in m/s^2
         sensor.setFluidDensity(water_density)  # Set fluid density 997 kg/m^3
@@ -113,7 +124,7 @@ class PressureReading (Node):
 
     def timer_callback(self):
         pressure_msg = Pressure()  # create a obj of type Pressure
-        sensor.read(ms5837.OSR_256)  # Read the sensor and update the pressure and temperature.
+        
         pressure_data = sensor.pressure(pascal)
         pressure_msg.data = pressure_data  # Get pressure data and give it to msg
         self.pressure_publisher_.publish(pressure_msg)  # publish pressure_msg to pressure_topic
