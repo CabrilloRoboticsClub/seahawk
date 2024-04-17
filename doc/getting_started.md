@@ -66,15 +66,17 @@ You Desktop is now a dev box.
 
 ## 2 Raspberry Pi 4 Setup
 
-### Start by creating a bootable SD card image
+### 2.1 Start by creating a bootable SD card image
 
 1. On your local computer download and install [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
 1. Attach a Micro SD card to your local computer
 1. Open Raspberry Pi Imager
     * `CHOOSE OS` > `Other general-purpose OS` > `Ubuntu` > `Ubuntu Server 22.04 LTS (64-bit)`
     * Choose the Micro SD card as the storage and hit `WRITE`
+    ![Pi imager options](/doc/img/pi_imager.png)
+    * Do not apply any OS customization settings
 1. Unplug the Micro SD card from your local computer, plug it back in to your local computer.
-1. Copy the `user-data` file from `setup/image` into the `system-boot` volume that shows up (overwrite the existing file).
+1. Copy the [`user-data`](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/blob/main/setup/image/user-data) file from the `setup/image` directory on this repo into the `system-boot` volume that shows up (overwrite the existing file).
 1. Install the SD card into the Raspberry Pi
 1. Connect the Pi to an ethernet connection with internet access
 1. Plug the power cable in to the Pi.
@@ -83,7 +85,7 @@ The Pi will boot, then reboot. Give it 10 minutes or so. The hostname and passwo
     ssh -A ubuntu@seahawk.local
     ```
 
-### Once you have SSHed into the new Pi image run the ROV specific playbooks
+### 2.2 Once you have SSHed into the new Pi image run the ROV specific playbooks
 
 1. Check out this repository into your home directory. 
     ```sh
@@ -110,7 +112,7 @@ The Pi will boot, then reboot. Give it 10 minutes or so. The hostname and passwo
 
 The `make rov-install` command installs ROS2 and creates user accounts on the Raspberry Pi. After rebooting you should be able to login with your own username. 
 
-### Using vscode to Connect to a Pi
+### 2.3 Using vscode to Connect to a Pi
 
 The best way to access the Raspberry Pi for software development is using vscode. You can use the access to develop and test nodes that run on the Pi or to just start the ROV during development of deck nodes. Assuming you have your own computer setup per the instructions above, perform the following steps to access the Pi. 
 
