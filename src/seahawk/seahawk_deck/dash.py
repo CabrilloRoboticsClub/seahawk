@@ -165,6 +165,8 @@ class MainWindow(qtw.QMainWindow):
         self.keystroke_pub = None
         self.pilot_input_set_params = None
         self.com_set_params = None
+        self.com_choice = None
+        self.com_shift = [0.0, 0.0, 0.0]
 
         # Set up main window
         self.colors = DEFAULT_COLORS
@@ -200,7 +202,7 @@ class MainWindow(qtw.QMainWindow):
         dependant on keystrokes
         """
         try:
-            data = chr(a0.key())
+            data = str(chr(a0.key()))
         except ValueError:
             data = "Invalid key"
         
@@ -210,16 +212,22 @@ class MainWindow(qtw.QMainWindow):
         self.keystroke_pub.publish(msg)
 
         # Update throttle curve parameter
-        if data in ["1", "2", "3"]:
+        if data in {"1", "2", "3"}:
             self.pilot_input_set_params.update_params("throttle_curve_choice", data)
             self.pilot_input_set_params.send_params()
             self.tab_widget.thrt_crv_widget.update(int(data))
 
         # Update Com Shift
-        # if data in ["x", "y", "z"]:
-        #     self.com_shift = data
-        # elif data != "owowow":
-        #     self.com_shift = data
+        if data in {"X", "Y", "Z"}:
+            self.com_choice = data
+        elif data not in {"-", "+", "Invalid key"}:
+            self.com_choice = None
+
+        if self.com_choice and data in {"-", "+"}:
+            self.com_shift[ord(self.com_choice) - 88] += 0.01 if data == "+" else -0.01
+            self.thrust_set_params.update_params("center_of_mass_offset", self.com_shift)
+            self.thrust_set_params.send_params()
+            self.tab_widget.com_shift_widget.update(self.com_shift)
 
         # Change colors mode between light and dark mode
         if data == "0":

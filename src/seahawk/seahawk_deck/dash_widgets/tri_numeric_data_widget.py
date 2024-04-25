@@ -59,7 +59,7 @@ class TriNumericDataWidget(qtw.QWidget):
             data: New data to display.
         """
         for data, new_data in zip(self.numeric_data, data):
-            data.setText(str(new_data))
+            data.setText(f"{new_data:.2f}")
 
     def set_colors(self, new_colors: dict):
         """
