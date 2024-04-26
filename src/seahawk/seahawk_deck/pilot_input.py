@@ -30,11 +30,13 @@ import rclpy
 from rclpy.node import Node 
 
 # ROS messages imports
-from geometry_msgs.msg import Twist 
+from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool
-from seahawk_msgs.msg import InputStates, ClawStates
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import SetParametersResult
 
+from seahawk_msgs.msg import InputStates, ClawStates
 
 class StickyButton():
     """
@@ -97,8 +99,10 @@ class PilotInput(Node):
 
         # Create and store parameter which determines which throttle curve
         # the pilot wants to use named 'throttle_curve_choice'. Defaults to '0'
-        self.declare_parameter("throttle_curve_choice", "1")
-        self.throttle_curve_choice = self.get_parameter("throttle_curve_choice").value
+        self.declare_parameter("throttle_curve_choice", 1)
+        self.add_on_set_parameters_callback(self.update_key_stroke)
+        # Variable of type string for storing hot keys for throttle curves
+        self.key_input = self.get_parameter("throttle_curve_choice").value
 
         # Button mapping
         self.buttons = {
@@ -111,6 +115,47 @@ class PilotInput(Node):
             # "":               StickyButton(),     # window
             # "":               StickyButton(),     # menu
         }
+
+
+    def update_key_stroke (self, params: list[Parameter]) -> SetParametersResult:
+        """
+        Callback for parameter update. Updates the Center of Mass offset 
+        and the motor and inverse config afterwards.
+
+        Args:
+            params: List of updated parameters (handles by ROS2)
+
+        Returns:
+            SetParametersResult() which lets ROS2 know if the parameters were 
+            set correctly or not
+        """
+        for param in params:
+            if param.name == "throttle_curve_choice":
+                if (value:=param.value) in {1, 2, 3}:
+                    # Note: If this is causing issues, maybe move to a separate callback
+                    # See: https://docs.ros.org/en/humble/Concepts/Basic/About-Parameters.html#parameter-callbacks
+                    self.key_input = value
+                    return SetParametersResult(successful=True)
+        return SetParametersResult(successful=False)
+
+
+    def throttle_curve(self, twist_msg: float):
+        """
+        Changes the value of twist messages (-1 -> 1) and fixes it to a polynomial depending on input from a keyboard
+
+        Args:
+            twist_msg: Message of type Twist from ROS2 library
+        """
+
+        # Check value of key_input and assign it to a polynomial to modify joy_msg
+        match self.key_input:  # functionality needs to be added for adding value to key_input
+            case 1:
+                return twist_msg  # Linear joystick input, key '1'. For simple constant acceleration.
+            case 2:
+                return pow(twist_msg, 3)  # Cubed joystick input, key '2'. Median between both curves.
+            case 3:
+                return pow(twist_msg, 5)  # Quintuple joystick input, key '3'. Helpful for quick acceleration.
+
 
     def callback(self, joy_msg: Joy):
         """
@@ -140,7 +185,7 @@ class PilotInput(Node):
             # Dpad
             # "":               int(max(joy_msg.axes[7], 0)),   # dpad_up
             # "":               int(-min(joy_msg.axes[7], 0)),  # dpad_down
-            # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left     
+            # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left
             # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right
             # Buttons
             "claw_2":           joy_msg.buttons[0], # a
@@ -156,12 +201,12 @@ class PilotInput(Node):
 
         # Create twist message
         twist_msg = Twist()
-        twist_msg.linear.x  = controller["linear_x"]    # forwards
-        twist_msg.linear.y  = -controller["linear_y"]   # sideways
-        twist_msg.linear.z  = ((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2)       # depth
-        twist_msg.angular.x = (controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5     # roll (const +/- 0.5 thrust)
-        twist_msg.angular.y = controller["angular_y"]   # pitch
-        twist_msg.angular.z = controller["angular_z"]  # yaw
+        twist_msg.linear.x  = self.throttle_curve(controller["linear_x"])  # forwards
+        twist_msg.linear.y  = self.throttle_curve(-controller["linear_y"])   # sideways
+        twist_msg.linear.z  = self.throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))       # depth
+        twist_msg.angular.x = self.throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5)     # roll (const +/- 0.5 thrust)
+        twist_msg.angular.y = self.throttle_curve(controller["angular_y"])   # pitch
+        twist_msg.angular.z = self.throttle_curve(controller["angular_z"])  # yaw
 
         # Bambi mode cuts all twist values in half for more precise movements
         if bambi_state := self.buttons["bambi_mode"].check_state(controller["bambi_mode"]):
@@ -171,7 +216,7 @@ class PilotInput(Node):
             twist_msg.angular.x /= 2
             twist_msg.angular.y /= 2
             twist_msg.angular.z /= 2
-     
+
         # Publish twist message
         self.twist_pub.publish(twist_msg)
 
@@ -201,5 +246,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == "main":
     main(sys.argv)
