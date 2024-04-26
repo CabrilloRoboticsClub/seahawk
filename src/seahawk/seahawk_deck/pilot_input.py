@@ -30,9 +30,12 @@ import rclpy
 from rclpy.node import Node 
 
 # ROS messages imports
-from geometry_msgs.msg import Twist 
+from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import SetParametersResult
+
 
 class StickyButton():
     """
@@ -40,12 +43,12 @@ class StickyButton():
     and pressed again to turn it off
     """
 
-    def __init__(self):
+    def init(self):
         """
         Initialize 'StickyButton' object
         """
-        self.__feature_state = False    # Is the feature this button controls on (True) or off (False)
-        self.__track_state = 0b0000     # Tracks the last four states of the button using bits
+        self.feature_state = False    # Is the feature this button controls on (True) or off (False)
+        self.track_state = 0b0000     # Tracks the last four states of the button using bits
     
     def check_state(self, cur_button_state: bool) -> bool:
         """
@@ -58,22 +61,22 @@ class StickyButton():
             True if the button is toggled on, False if off
         """
         # Append the current button state to the tracker then removes all but rightmost byte
-        # such that self.__track_state records the most recent four states of the button
-        self.__track_state = (self.__track_state << 1 | cur_button_state) & 0b1111
+        # such that self.track_state records the most recent four states of the button
+        self.track_state = (self.track_state << 1 | cur_button_state) & 0b1111
 
         # Account for bounce by making sure the last four recorded states
         # appear to represent a button press. A debounced button press is defined as two recorded
         # consecutive off states followed by two on states. If the button is pressed, update the feature state
-        if self.__track_state == 0b0011:
-            self.__feature_state = not self.__feature_state
-        return self.__feature_state
+        if self.track_state == 0b0011:
+            self.feature_state = not self.feature_state
+        return self.feature_state
 
     def reset(self):
         """
         Resets button state to original configuration
         """
-        self.__feature_state = False
-        self.__track_state = 0b0000
+        self.feature_state = False
+        self.track_state = 0b0000
 
 
 class PilotInput(Node):
@@ -81,27 +84,26 @@ class PilotInput(Node):
     Class that implements the joystick input
     """
 
-    def __init__(self):
+    def init(self):
         """
         Initialize 'pilot_input' node
         """
-        super().__init__("pilot_input")
+        super().init("pilot_input")
 
         # Create publishers and subscriptions
-        self.subscription = self.create_subscription(Joy, "joy", self.__callback, 10)
-        self.__twist_pub = self.create_publisher(Twist, "desired_twist", 10)
-        self.__claw_pub = self.create_publisher(Bool, "claw_state", 10)
+        self.subscription = self.create_subscription(Joy, "joy", self.callback, 10)
+        self.twist_pub = self.create_publisher(Twist, "desired_twist", 10)
+        self.claw_pub = self.create_publisher(Bool, "claw_state", 10)
 
         # Create and store parameter which determines which throttle curve
         # the pilot wants to use named 'throttle_curve_choice'. Defaults to '0'
-        self.declare_parameter("throttle_curve_choice", "0")
-        self.__throttle_curve_choice = self.get_parameter("throttle_curve_choice").value
-
+        self.declare_parameter("throttle_curve_choice", 1)
+        self.add_on_set_parameters_callback(self.update_key_stroke)
         # Variable of type string for storing hot keys for throttle curves
-        self.__key_input = self.get_parameter('throttle_curve_choice').get_parameter_value().string_value
+        self.key_input = self.get_parameter("throttle_curve_choice").value
 
         # Button mapping
-        self.__buttons = {
+        self.buttons = {
             # "" :              StickyButton(),     # left_stick_press
             # "" :              StickyButton(),     # right_stick_press
             # "" :              StickyButton(),     # a
@@ -112,7 +114,30 @@ class PilotInput(Node):
             # "":               StickyButton(),     # menu
         }
 
-    def __throttle_curve(self, twist_msg: float):
+
+    def update_key_stroke (self, params: list[Parameter]) -> SetParametersResult:
+        """
+        Callback for parameter update. Updates the Center of Mass offset 
+        and the motor and inverse config afterwards.
+
+        Args:
+            params: List of updated parameters (handles by ROS2)
+
+        Returns:
+            SetParametersResult() which lets ROS2 know if the parameters were 
+            set correctly or not
+        """
+        for param in params:
+            if param.name == "throttle_curve_choice":
+                if (value:=param.value) in {1, 2, 3}:
+                    # Note: If this is causing issues, maybe move to a separate callback
+                    # See: 
+                    self.key_input = value
+                    return SetParametersResult(successful=True)
+        return SetParametersResult(successful=False)
+
+
+    def throttle_curve(self, twist_msg: float):
         """
         Changes the value of twist messages (-1 -> 1) and fixes it to a polynomial depending on input from a keyboard
 
@@ -121,19 +146,16 @@ class PilotInput(Node):
         """
 
         # Check value of key_input and assign it to a polynomial to modify joy_msg
-        match self.__key_input:  # functionality needs to be added for adding value to key_input
-            case "1":
+        match self.key_input:  # functionality needs to be added for adding value to key_input
+            case 1:
                 return twist_msg  # Linear joystick input, key '1'. For simple constant acceleration.
-            case "2":
+            case 2:
                 return pow(twist_msg, 3)  # Cubed joystick input, key '2'. Median between both curves.
-            case "3":
+            case 3:
                 return pow(twist_msg, 5)  # Quintuple joystick input, key '3'. Helpful for quick acceleration.
-            case __:
-                print("No keyboard input")  # Maybe helpful for debugging.
 
-        return twist_msg
 
-    def __callback(self, joy_msg: Joy):
+    def callback(self, joy_msg: Joy):
         """
         Takes in input from the joy message from the x box and republishes it as a twist specifying 
         the direction (linear and angular x, y, z) and percent of max speed the pilot wants the robot to move
@@ -177,35 +199,35 @@ class PilotInput(Node):
 
         # Create twist message
         twist_msg = Twist()
-        twist_msg.linear.x  = self.__throttle_curve(controller["linear_x"])  # forwards
-        twist_msg.linear.y  = self.__throttle_curve(-controller["linear_y"])   # sideways
-        twist_msg.linear.z  = self.__throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))       # depth
-        twist_msg.angular.x = self.__throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5)     # roll (const +/- 0.5 thrust)
-        twist_msg.angular.y = self.__throttle_curve(controller["angular_y"])   # pitch
-        twist_msg.angular.z = self.__throttle_curve(controller["angular_z"])  # yaw
+        twist_msg.linear.x  = self.throttle_curve(controller["linear_x"])  # forwards
+        twist_msg.linear.y  = self.throttle_curve(-controller["linear_y"])   # sideways
+        twist_msg.linear.z  = self.throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))       # depth
+        twist_msg.angular.x = self.throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5)     # roll (const +/- 0.5 thrust)
+        twist_msg.angular.y = self.throttle_curve(controller["angular_y"])   # pitch
+        twist_msg.angular.z = self.throttle_curve(controller["angular_z"])  # yaw
 
         # Bambi mode cuts all twist values in half for more precise movements
-        if self.__buttons["bambi_mode"].check_state(controller["bambi_mode"]):
+        if self.buttons["bambi_mode"].check_state(controller["bambi_mode"]):
             twist_msg.linear.x  /= 2
             twist_msg.linear.y  /= 2
             twist_msg.linear.z  /= 2
             twist_msg.angular.x /= 2
             twist_msg.angular.y /= 2
             twist_msg.angular.z /= 2
-     
+
         # Publish twist message
-        self.__twist_pub.publish(twist_msg)
+        self.twist_pub.publish(twist_msg)
 
         # Create claw message
         claw_msg = Bool()
-        claw_msg.data = self.__buttons["claw"].check_state(controller["claw"])
+        claw_msg.data = self.buttons["claw"].check_state(controller["claw"])
 
         # Publish claw message
-        self.__claw_pub.publish(claw_msg)
+        self.claw_pub.publish(claw_msg)
 
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
-            self.__buttons["bambi_mode"].reset()
+            self.buttons["bambi_mode"].reset()
 
 
 def main(args=None):
@@ -214,5 +236,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == "main":
     main(sys.argv)
