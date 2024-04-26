@@ -169,7 +169,7 @@ class Thrust(Node):
         Returns:
             SetParametersResult() which lets ROS2 know if the parameters were set correctly or not
         """
-        center_of_mass_offset = self.get_parameter("center_of_mass_offset").value
+        center_of_mass_offset = params[0]._value.tolist()
         if len(center_of_mass_offset) != 3:
             return SetParametersResult(successful=False)
         self.motor_config = self.generate_motor_config(center_of_mass_offset)
