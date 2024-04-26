@@ -21,6 +21,7 @@ from seahawk_deck.dash_widgets.throttle_curve_widget import ThrtCrvWidget
 from seahawk_deck.dash_widgets.turn_bank_indicator_widget import TurnBankIndicator
 from seahawk_deck.dash_widgets.term_widget import TermWidget
 from seahawk_deck.set_remote_params import SetRemoteParams
+from seahawk_deck.dash_widgets.tri_numeric_data_widget import TriNumericDataWidget
 from seahawk_msgs.msg import InputStates
 
 PATH = path.dirname(__file__)
@@ -113,14 +114,16 @@ class RosQtBridge(qtw.QWidget):
         self.keystroke_pub = pub
         self.new_publisher_sgl.emit()
     
-    def add_set_params(self, set_param_obj: SetRemoteParams):
+    def add_set_params(self, pilot_input_set_params: SetRemoteParams, thrust_set_params: SetRemoteParams):
         """
         Gives Qt access to a `SetRemoteParams` and emits a `pilot_input_set_params`.
 
         Args:
-            set_param_obj: SetRemoteParams instance to give Qt access to.
+            pilot_input_set_params: SetRemoteParams instance to give Qt access to.
+            thrust_set_params: SetRemoteParams instance to give Qt access to.
         """
-        self.pilot_input_set_params = set_param_obj
+        self.pilot_input_set_params = pilot_input_set_params
+        self.thrust_set_params = thrust_set_params
         self.new_set_params_sgl.emit()
 
 
@@ -161,6 +164,9 @@ class MainWindow(qtw.QMainWindow):
         self.ros_qt_bridge.new_set_params_sgl.connect(self.add_set_params)
         self.keystroke_pub = None
         self.pilot_input_set_params = None
+        self.com_set_params = None
+        self.com_choice = None
+        self.com_shift = [0.0, 0.0, 0.0]
 
         # Set up main window
         self.colors = DEFAULT_COLORS
@@ -187,6 +193,7 @@ class MainWindow(qtw.QMainWindow):
         Adds the pilot input set params object to `MainWindow`.
         """
         self.pilot_input_set_params = self.ros_qt_bridge.pilot_input_set_params
+        self.thrust_set_params = self.ros_qt_bridge.thrust_set_params
 
     def keyPressEvent(self, a0: QKeyEvent) -> None:
         """
@@ -195,7 +202,7 @@ class MainWindow(qtw.QMainWindow):
         dependant on keystrokes
         """
         try:
-            data = chr(a0.key())
+            data = str(chr(a0.key()))
         except ValueError:
             data = "Invalid key"
         
@@ -205,11 +212,23 @@ class MainWindow(qtw.QMainWindow):
         self.keystroke_pub.publish(msg)
 
         # Update throttle curve parameter
-        if data in ["1", "2", "3"]:
+        if data in {"1", "2", "3"}:
             self.pilot_input_set_params.update_params("throttle_curve_choice", data)
             self.pilot_input_set_params.send_params()
             self.tab_widget.thrt_crv_widget.update(int(data))
-        
+
+        # Update Com Shift
+        if data in {"X", "Y", "Z"}:
+            self.com_choice = data
+        elif data not in {"-", "+", "Invalid key"}:
+            self.com_choice = None
+
+        if self.com_choice and data in {"-", "+"}:
+            self.com_shift[ord(self.com_choice) - 88] += 0.01 if data == "+" else -0.01
+            self.thrust_set_params.update_params("center_of_mass_offset", self.com_shift)
+            self.thrust_set_params.send_params()
+            self.tab_widget.com_shift_widget.update(self.com_shift)
+
         # Change colors mode between light and dark mode
         if data == "0":
             if self.colors == DARK_MODE: self.update_colors(LIGHT_MODE)
@@ -220,6 +239,7 @@ class MainWindow(qtw.QMainWindow):
         self.setStyleSheet(f"background-color: {self.colors['MAIN_WIN_BKG']};")
         self.tab_widget.set_colors(self.colors)
         self.tab_widget.state_widget.set_colors(self.colors)
+        self.tab_widget.com_shift_widget.set_colors(self.colors)
         self.tab_widget.thrt_crv_widget.set_colors(self.colors)
         self.tab_widget.temp_widget.set_colors(self.colors)
         self.tab_widget.depth_widget.set_colors(self.colors)
@@ -322,21 +342,23 @@ class TabWidget(qtw.QWidget):
         cam_layout = qtw.QGridLayout()
 
         # Create widgets
-        self.state_widget = StateWidget(tab, ["Bambi Mode", "CoM Shift"], PATH + "/dash_styling/state_widget.txt", self.colors)
+        self.state_widget = StateWidget(tab, ["Bambi Mode"], PATH + "/dash_styling/state_widget.txt", self.colors)
+        self.com_shift_widget = TriNumericDataWidget(tab, "CoM Shift", PATH + "/dash_styling/tri_numeric_data_widget.txt", self.colors)
         self.thrt_crv_widget = ThrtCrvWidget(tab, self.colors)
+        self.turn_bank_indicator_widget = TurnBankIndicator(tab, PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.temp_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.depth_widget = NumericDataWidget(tab, "Depth", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.turn_bank_indicator_widget = TurnBankIndicator(tab, PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.countdown_widget = CountdownWidget(tab, PATH + "/dash_styling/countdown_widget.txt", self.colors, minutes=15, seconds=0)
 
         # Add widgets to side vertical layout
         # Stretch modifies the ratios of the widgets (must add up to 100)
-        vert_widgets_layout.addWidget(self.state_widget, stretch=12)
-        vert_widgets_layout.addWidget(self.thrt_crv_widget, stretch=16)
-        vert_widgets_layout.addWidget(self.temp_widget, stretch=16)
-        vert_widgets_layout.addWidget(self.depth_widget, stretch=16)
-        vert_widgets_layout.addWidget(self.turn_bank_indicator_widget, stretch=16)
-        vert_widgets_layout.addWidget(self.countdown_widget, stretch=24)
+        vert_widgets_layout.addWidget(self.state_widget, stretch=8)
+        vert_widgets_layout.addWidget(self.com_shift_widget, stretch=8)
+        vert_widgets_layout.addWidget(self.thrt_crv_widget, stretch=18)
+        vert_widgets_layout.addWidget(self.turn_bank_indicator_widget, stretch=18)
+        vert_widgets_layout.addWidget(self.temp_widget, stretch=14)
+        vert_widgets_layout.addWidget(self.depth_widget, stretch=14)
+        vert_widgets_layout.addWidget(self.countdown_widget, stretch=20)
 
         # Setup cameras
         self.cam_front = VideoFrame()
@@ -348,6 +370,9 @@ class TabWidget(qtw.QWidget):
         # Dynamically sized, endures the image fits any aspect ratio. Will resize image to fit
         self.demo_map.setScaledContents(True)
         self.demo_map.setSizePolicy(qtw.QSizePolicy.Ignored, qtw.QSizePolicy.Ignored)
+
+        # Initial value of CoM shift
+        self.com_shift_widget.update([0.0, 0.0, 0.0])
 
         # (0, 0)    (0, 1)
         # (1, 0)    (1, 1)
@@ -410,7 +435,6 @@ class TabWidget(qtw.QWidget):
         """
         input_state_dict = {
             "Bambi Mode":   self.ros_qt_bridge.input_state_msg.bambi_mode,
-            "CoM Shift":    self.ros_qt_bridge.input_state_msg.com_shift
         }
         self.state_widget.update(input_state_dict)
     
@@ -420,7 +444,6 @@ class TabWidget(qtw.QWidget):
         graph_layout = qtw.QGridLayout()
         term_layout = qtw.QVBoxLayout()
 
-        # Create debug graph instances
         temp_graph_1 = qtw.QFrame()
         temp_graph_2 = qtw.QFrame()
         temp_graph_3 = qtw.QFrame()
@@ -465,9 +488,9 @@ class Dash(Node):
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))
-        
-        # Comment this out if we want to test the dashboard without parameters (will crash if pilot_input is inactive)
-        ros_qt_bridge.add_set_params(SetRemoteParams(self, "pilot_input"))
+
+        # Comment this out if we want to test the dashboard without parameters (will crash otherwise)
+        ros_qt_bridge.add_set_params(SetRemoteParams(self, "pilot_input"), SetRemoteParams(self, "thrust"))
 
 
 def fix_term():
