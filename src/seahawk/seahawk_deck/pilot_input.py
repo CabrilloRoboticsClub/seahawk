@@ -36,6 +36,7 @@ from std_msgs.msg import Bool
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 
+from seahawk_msgs.msg import InputStates, ClawStates
 
 class StickyButton():
     """
@@ -43,12 +44,12 @@ class StickyButton():
     and pressed again to turn it off
     """
 
-    def init(self):
+    def __init__(self):
         """
         Initialize 'StickyButton' object
         """
-        self.feature_state = False    # Is the feature this button controls on (True) or off (False)
-        self.track_state = 0b0000     # Tracks the last four states of the button using bits
+        self.__feature_state = False    # Is the feature this button controls on (True) or off (False)
+        self.__track_state = 0b0000     # Tracks the last four states of the button using bits
     
     def check_state(self, cur_button_state: bool) -> bool:
         """
@@ -61,22 +62,22 @@ class StickyButton():
             True if the button is toggled on, False if off
         """
         # Append the current button state to the tracker then removes all but rightmost byte
-        # such that self.track_state records the most recent four states of the button
-        self.track_state = (self.track_state << 1 | cur_button_state) & 0b1111
+        # such that self.__track_state records the most recent four states of the button
+        self.__track_state = (self.__track_state << 1 | cur_button_state) & 0b1111
 
         # Account for bounce by making sure the last four recorded states
         # appear to represent a button press. A debounced button press is defined as two recorded
         # consecutive off states followed by two on states. If the button is pressed, update the feature state
-        if self.track_state == 0b0011:
-            self.feature_state = not self.feature_state
-        return self.feature_state
+        if self.__track_state == 0b0011:
+            self.__feature_state = not self.__feature_state
+        return self.__feature_state
 
     def reset(self):
         """
         Resets button state to original configuration
         """
-        self.feature_state = False
-        self.track_state = 0b0000
+        self.__feature_state = False
+        self.__track_state = 0b0000
 
 
 class PilotInput(Node):
@@ -84,16 +85,17 @@ class PilotInput(Node):
     Class that implements the joystick input
     """
 
-    def init(self):
+    def __init__(self):
         """
         Initialize 'pilot_input' node
         """
-        super().init("pilot_input")
+        super().__init__("pilot_input")
 
         # Create publishers and subscriptions
         self.subscription = self.create_subscription(Joy, "joy", self.callback, 10)
         self.twist_pub = self.create_publisher(Twist, "desired_twist", 10)
-        self.claw_pub = self.create_publisher(Bool, "claw_state", 10)
+        self.claw_pub = self.create_publisher(ClawStates, "claws", 10)
+        self.input_states_pub = self.create_publisher(InputStates, "input_states", 10)
 
         # Create and store parameter which determines which throttle curve
         # the pilot wants to use named 'throttle_curve_choice'. Defaults to '0'
@@ -106,10 +108,10 @@ class PilotInput(Node):
         self.buttons = {
             # "" :              StickyButton(),     # left_stick_press
             # "" :              StickyButton(),     # right_stick_press
-            # "" :              StickyButton(),     # a
+            "claw_2" :          StickyButton(),     # a
             "bambi_mode":       StickyButton(),     # b
-            "claw":             StickyButton(),     # x
-            # "":               StickyButton(),     # y
+            "main_claw":        StickyButton(),     # x
+            "claw_1":           StickyButton(),     # y
             # "":               StickyButton(),     # window
             # "":               StickyButton(),     # menu
         }
@@ -186,10 +188,10 @@ class PilotInput(Node):
             # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left
             # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right
             # Buttons
-            # "":               joy_msg.buttons[0], # a
+            "claw_2":           joy_msg.buttons[0], # a
             "bambi_mode":       joy_msg.buttons[1], # b
-            "claw":             joy_msg.buttons[2], # x
-            # "":               joy_msg.buttons[3], # y
+            "main_claw":        joy_msg.buttons[2], # x
+            "claw_1":           joy_msg.buttons[3], # y
             "pos_angular_x":    joy_msg.buttons[4], # left_bumper
             "neg_angular_x":    joy_msg.buttons[5], # right_bumper
             # "":               joy_msg.buttons[6], # window
@@ -207,7 +209,7 @@ class PilotInput(Node):
         twist_msg.angular.z = self.throttle_curve(controller["angular_z"])  # yaw
 
         # Bambi mode cuts all twist values in half for more precise movements
-        if self.buttons["bambi_mode"].check_state(controller["bambi_mode"]):
+        if bambi_state := self.buttons["bambi_mode"].check_state(controller["bambi_mode"]):
             twist_msg.linear.x  /= 2
             twist_msg.linear.y  /= 2
             twist_msg.linear.z  /= 2
@@ -219,11 +221,19 @@ class PilotInput(Node):
         self.twist_pub.publish(twist_msg)
 
         # Create claw message
-        claw_msg = Bool()
-        claw_msg.data = self.buttons["claw"].check_state(controller["claw"])
+        claw_msg = ClawStates()
+        claw_msg.main_claw = self.buttons["main_claw"].check_state(controller["main_claw"])
+        claw_msg.claw_1 = self.buttons["claw_1"].check_state(controller["claw_1"])
+        claw_msg.claw_2 = self.buttons["claw_2"].check_state(controller["claw_2"])
 
         # Publish claw message
         self.claw_pub.publish(claw_msg)
+
+        # Publish input states message for the dashboard
+        input_states_msg = InputStates()
+        input_states_msg.bambi_mode = bambi_state
+        input_states_msg.com_shift = False
+        self.input_states_pub.publish(input_states_msg)
 
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:

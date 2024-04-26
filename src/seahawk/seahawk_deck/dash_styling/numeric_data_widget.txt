@@ -1,0 +1,19 @@
+QLabel[accessibleName="name"] {{
+    qproperty-alignment: AlignCenter;
+    padding: 5px;
+    color: {TEXT};
+    max-height: 25px;
+}}
+
+QLabel[accessibleName="data"] {{
+    qproperty-alignment: AlignCenter;
+    padding: 5px;
+    color: {ACCENT};
+    font: bold;
+    font-size: 36px
+}}
+
+QFrame {{
+    background-color: {SURFACE_PRIMARY};
+	border-radius: 8px;
+}}

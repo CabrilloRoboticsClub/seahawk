@@ -30,11 +30,15 @@ from rclpy.node import Node
 
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Int16MultiArray
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 
 from scipy.optimize import curve_fit
 import numpy as np
+from os import path
+
+PATH = path.dirname(__file__)
 
 class Thrust(Node):
     """
@@ -45,11 +49,11 @@ class Thrust(Node):
         """Initialize this node"""
         super().__init__("thrust")
 
-        self.MAX_FWD_THRUST = 36.3826715 # N
-        self.MAX_REV_THRUST = -28.6354180 # N
+        self.MAX_FWD_THRUST = 36.3826715 / 2 # N
+        self.MAX_REV_THRUST = -28.6354180 / 2 # N
 
-        self.TOTAL_CURRENT_LIMIT = 70 # A
-        self.ESC_CURRENT_LIMIT = 40 # A
+        self.TOTAL_CURRENT_LIMIT = 70 /2 # A
+        self.ESC_CURRENT_LIMIT = 40 / 2 # A
 
         self.motor_positions = [ # [X, Y, Z] positions for each motors
             [ 0.200,  0.130,  0.004], # Motor 0
@@ -74,15 +78,22 @@ class Thrust(Node):
         ]
 
         self.declare_parameter("center_of_mass_offset", [0.0, 0.0, 0.0])
+        self.declare_parameter("publishing_pwm", True)
 
         self.add_on_set_parameters_callback(self.update_center_of_mass)
 
         self.motor_config = self.generate_motor_config(self.get_parameter("center_of_mass_offset").value)
         self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
 
-        self.subscription = self.create_subscription(Twist, "desired_twist", self._callback, 10)
-        self.motor_pub = self.create_publisher(Float32MultiArray, "motor_values", 10)
-        self.__params = Thrust.__generate_curve_fit_params()
+        if self.get_parameter("publishing_pwm").value:
+            self.pwm_fit_params = Thrust.generate_pwm_fit_params()
+            self.subscription = self.create_subscription(Twist, "desired_twist", self.pwm_callback, 10)
+            self.pwm_pub = self.create_publisher(Int16MultiArray, "pwm_values", 10)
+        else:
+            self.thrust_pub = self.create_publisher(Float32MultiArray, "motor_values", 10)
+            self.subscription = self.create_subscription(Twist, "desired_twist", self.thrust_callback, 10)
+
+        self.thrust_fit_params = Thrust.generate_thrust_fit_param()
 
     def get_polynomial_coef(self, mv: list, limit: float) -> list:
         """
@@ -97,13 +108,13 @@ class Thrust(Node):
             A list of the coefficients of a 5th degree polynomial function, where the input of said
             function is the scaling factor and the output is the current (A) draw
         """
-        return [self.__params[0] * sum([thrust**6 for thrust in mv]),
-                self.__params[1] * sum([thrust**5 for thrust in mv]),
-                self.__params[2] * sum([thrust**4 for thrust in mv]),
-                self.__params[3] * sum([thrust**3 for thrust in mv]),
-                self.__params[4] * sum([thrust**2 for thrust in mv]),
-                self.__params[5] * sum(mv),
-                self.__params[6] * len(mv) - limit]
+        return [self.thrust_fit_params[0] * sum([thrust**6 for thrust in mv]),
+                self.thrust_fit_params[1] * sum([thrust**5 for thrust in mv]),
+                self.thrust_fit_params[2] * sum([thrust**4 for thrust in mv]),
+                self.thrust_fit_params[3] * sum([thrust**3 for thrust in mv]),
+                self.thrust_fit_params[4] * sum([thrust**2 for thrust in mv]),
+                self.thrust_fit_params[5] * sum(mv),
+                self.thrust_fit_params[6] * len(mv) - limit]
 
     def get_current_scalar_value(self, mv: list, limit: float) -> float:
         """
@@ -194,7 +205,8 @@ class Thrust(Node):
 
         Args:
             x: Thrust being produced in newtons.
-            a-f: Arbitrary parameters to map thrust to current, see __generate_curve_fit_params()
+            a-f: Arbitrary parameters to map thrust to current, see generate_thrust_fit_params
+()
 
         Returns:
             Current (estimated) to be drawn in amps.
@@ -202,7 +214,7 @@ class Thrust(Node):
         return (a * x**6) + (b * x**5) + (c * x**4) + (d * x**3) + (e * x**2) + (f * x) + (g)
 
     @staticmethod
-    def __generate_curve_fit_params() -> list:
+    def generate_thrust_fit_param() -> list:
         """
         Generates Optimal Parameters for __thrust_to_current() to have a best fit
 
@@ -212,7 +224,7 @@ class Thrust(Node):
         x = list()
         y = list()
 
-        with open("src/seahawk/seahawk_deck/thrust_to_current.tsv", "r") as file:
+        with open(PATH + "/thrust_to_current.tsv", "r") as file:
             for data_point in file:
                 data = data_point.split("\t")
                 x.append(data[0])
@@ -237,11 +249,11 @@ class Thrust(Node):
                         else float("inf"))
                     for thrust in motor_values])
 
-    def _callback(self, twist_msg):
+    def generate_motor_values(self, twist_msg):
         """Called every time the twist publishes a message."""
 
         # Convert the X,Y,Z,R,P,Y to thrust settings for each motor. 
-        motor_msg = Float32MultiArray()
+        motor_values = []
 
         # Convert Twist to single vector for multiplication
         twist_array = [
@@ -254,29 +266,83 @@ class Thrust(Node):
         ]
 
         if twist_array == [0, 0, 0, 0, 0, 0]:
-            motor_msg.data = [0.0 for motor in range(8)] # No thrust needed
-            self.motor_pub.publish(motor_msg)
-            return
+            return [0.0 for motor in range(8)] # No thrust needed
 
         # Multiply twist with inverse of motor config to get motor effort values
-        motor_msg.data = np.matmul(self.inverse_config, twist_array).tolist()
+        motor_values = np.matmul(self.inverse_config, twist_array).tolist()
 
-        thrust_scalar = self.get_thrust_limit_scalar(motor_msg.data)
-        current_scalar = self.get_minimum_current_scalar(motor_msg.data)
+        thrust_scalar = self.get_thrust_limit_scalar(motor_values)
+        current_scalar = self.get_minimum_current_scalar(motor_values)
         # Scalar will be the smaller of the two, largest value in twist array
         # will be percentage of that maximum
         scalar = min(thrust_scalar, current_scalar) * max([abs(val) for val in twist_array])
 
-        # scale motor values
-        motor_msg.data = [thrust * scalar for thrust in motor_msg.data]
+        # scale and return motor values
+        return [thrust * scalar for thrust in motor_values]
 
-        self.motor_pub.publish(motor_msg)
+    @staticmethod
+    def newtons_to_pwm(x: float, a: float, b: float, c: float, d: float, e: float, f: float) -> float:
+        """
+        Converts desired newtons into its corresponding PWM value
 
+        Args:
+            x: The force in newtons desired
+            a-f: Arbitrary parameters to map newtons to pwm, see __generate_curve_fit_params()
+
+        Returns:
+            PWM value corresponding to the desired thrust
+        """
+        return (a * x**5) + (b * x**4) + (c * x**3) + (d * x**2) + (e * x) + f
+
+    @staticmethod
+    def generate_pwm_fit_params():
+        x = []
+        y = []
+
+        with open(PATH + "/newtons_to_pwm.tsv", "r") as file:
+            for data_point in file:
+                data = data_point.split("\t")
+                x.append(data[0])
+                y.append(data[1])
+
+        optimal_params, param_covariance = curve_fit(Thrust.newtons_to_pwm, x, y)
+        return optimal_params
+
+    def thrust_callback(self, twist_msg):
+        thrust_msg = Float32MultiArray()
+        thrust_msg.data = self.generate_motor_values(twist_msg)
+        self.thrust_pub.publish(thrust_msg)
+
+    def pwm_callback(self, twist_msg):
+        pwm_values = Int16MultiArray()
+        pwm_values.data = [0] * 8
+        motor_values = self.generate_motor_values(twist_msg)
+        for index, newton in enumerate(motor_values):
+            pwm_values.data[index] = int(Thrust.newtons_to_pwm(
+                newton,
+                self.pwm_fit_params[0],
+                self.pwm_fit_params[1],
+                self.pwm_fit_params[2],
+                self.pwm_fit_params[3],
+                self.pwm_fit_params[4],
+                self.pwm_fit_params[5]))
+            pwm_values.data[index] = 1900 if pwm_values.data[index] > 1900 else 1100 if pwm_values.data[index] < 1100 else pwm_values.data[index]
+            if newton == 0: pwm_values.data[index] = 1500
+        self.pwm_pub.publish(pwm_values)
+    
+    def __del__(self):
+        pwm_values = Int16MultiArray()
+        pwm_values.data = [1500] * 8
+        self.pwm_pub.publish(pwm_values)
 
 def main(args=None):
     rclpy.init(args=args)
-    rclpy.spin(Thrust())
-    rclpy.shutdown()    
+    node = Thrust()
+    try: 
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        del node
+        rclpy.shutdown()    
 
 
 if __name__ == "__main__":

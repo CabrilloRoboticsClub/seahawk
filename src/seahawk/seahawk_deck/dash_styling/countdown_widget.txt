@@ -1,0 +1,71 @@
+QLabel[accessibleName="Title"] {{
+    qproperty-alignment: AlignCenter;
+    padding: 5px;
+    color: {TEXT};
+    max-height: 25px;
+}}
+
+QLabel[accessibleName="Timer Display"]{{
+    qproperty-alignment: AlignCenter;
+    padding: 5px;
+    color: {ACCENT};
+    font: bold;
+    font-size: 36px
+}}
+
+QFrame {{
+    background-color: {SURFACE_PRIMARY};
+	border-radius: 8px;
+}}
+
+QPushButton {{
+    background-color: {SURFACE_SECONDARY};
+    font: bold 14px;
+    padding: 6px;
+    border-radius: 5px;
+    color: {TEXT};
+    selection-background-color: rgba(0, 0, 0, 0)
+}}
+
+QPushButton::pressed {{
+    background-color: {ACCENT};
+    border-style: inset;
+    color: {TEXT_EMPH};
+}}
+
+QPushButton::hover {{
+    color: {TEXT_EMPH};
+}}
+
+QSpinBox {{
+    background: {SURFACE_SECONDARY};
+    selection-background-color: {ACCENT};
+    padding: 6px; /* make room for the arrows */
+    border-radius: 5px;
+    color: {TEXT};
+}}
+
+QSpinBox::up-arrow {{
+    image: url({UP_ARROW});
+}}
+
+QSpinBox::down-arrow {{
+    image: url({DOWN_ARROW});
+}}
+
+QSpinBox::hover {{
+    border : 2px solid {ACCENT};
+}}
+
+QProgressBar {{
+    background: {SURFACE_PRIMARY};
+    border: 2px solid {ACCENT};
+    border-radius: 5px;
+    qproperty-alignment: AlignCenter;
+    color: {SURFACE_PRIMARY};
+}}
+
+QProgressBar::chunk {{
+    background-color: {ACCENT};
+    width: 1px;
+}}

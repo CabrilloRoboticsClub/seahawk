@@ -1,0 +1,64 @@
+/* Modifies the open tab body style*/
+QTabWidget>QWidget>QWidget{{
+    background: {TAB_BKG};
+    border: 2px solid {ACCENT};
+    border-top-right-radius:    10px;
+    border-bottom-left-radius:  10px;
+    border-bottom-right-radius: 10px;
+}}
+
+/* Modifies all tab chips */
+QTabBar::tab {{
+    border: 2px solid {INACTIVE_TAB_BD};
+    color:  {TEXT};
+    border-top-left-radius:     8px;
+    border-top-right-radius:    8px;
+}}
+
+/* Modifies selected tab chip*/
+QTabBar::tab:selected {{
+    background: {ACCENT};
+    border: 2px solid {ACCENT};
+    color:  {TEXT_EMPH}
+}}
+
+/* Modifies unselected selected tabs  */
+QTabBar::tab:!selected {{
+    background: {TAB_BKG};
+}}
+
+/* Modifies tab when mouse is hovered over it */
+QTabBar::tab:!selected:hover {{
+    color: {TEXT_EMPH}
+}}
+
+/* Makes tab "jump up" when pressed */
+QTabBar::tab:top:!selected {{
+    margin-top: 3px;
+}}
+
+/* Makes tab "jump up" when pressed */
+QTabBar::tab:bottom:!selected {{
+    margin-bottom: 3px;
+}}
+
+/* Padding around text */
+QTabBar::tab:top, QTabBar::tab:bottom {{
+    min-width: 8ex;
+    margin-right: -1px;
+    padding: 5px 10px 5px 10px;
+}}
+
+/* Prevents "border overflow" */
+QTabBar::tab:left:selected {{
+    border-left-color: none;
+}}
+
+/* Prevents "border overflow" */
+QTabBar::tab:right:selected {{
+    border-right-color: none;
+}}
+
+QLabel{{
+    background-color: {SURFACE_PRIMARY};
+}}

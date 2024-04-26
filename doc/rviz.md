@@ -6,15 +6,13 @@
 <img src="img/rviz.gif" width="400">
 
 ## Running RViz
-1. Launch the deck or run relevant nodes independently. If running individual nodes, be sure to also run the node which is responsible for creating and displaying the force vectors (`rviz_markers`).
-    ```sh
-    ros2 run seahawk rviz_markers
-    ```
-2. Launch RViz.
-    ```sh
-    ros2 launch seahawk kinematics_viz.launch.py
-    ```
-3. A window with the RViz simulation should open automatically.
+Launch RViz.
+
+```sh
+ros2 launch seahawk rviz.launch.py
+```
+
+A window with the RViz simulation should open automatically.
 
 ## Maintaining/updating Rviz model
 
