@@ -213,18 +213,18 @@ class MainWindow(qtw.QMainWindow):
 
         # Update throttle curve parameter
         if data in {"1", "2", "3"}:
-            self.pilot_input_set_params.update_params("throttle_curve_choice", data)
+            self.pilot_input_set_params.update_params("throttle_curve_choice", int(data))
             self.pilot_input_set_params.send_params()
             self.tab_widget.thrt_crv_widget.update(int(data))
 
         # Update Com Shift
         if data in {"X", "Y", "Z"}:
             self.com_choice = data
-        elif data not in {"-", "+", "Invalid key"}:
+        elif data not in {"-", "+", "=", "Invalid key"}:
             self.com_choice = None
 
-        if self.com_choice and data in {"-", "+"}:
-            self.com_shift[ord(self.com_choice) - 88] += 0.01 if data == "+" else -0.01
+        if self.com_choice and data in {"-", "+", "="}:
+            self.com_shift[ord(self.com_choice) - 88] += 0.01 if data in {"+", "="} else -0.01
             self.thrust_set_params.update_params("center_of_mass_offset", self.com_shift)
             self.thrust_set_params.send_params()
             self.tab_widget.com_shift_widget.update(self.com_shift)
