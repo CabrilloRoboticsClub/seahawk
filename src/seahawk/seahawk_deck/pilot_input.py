@@ -131,7 +131,7 @@ class PilotInput(Node):
             if param.name == "throttle_curve_choice":
                 if (value:=param.value) in {1, 2, 3}:
                     # Note: If this is causing issues, maybe move to a separate callback
-                    # See: 
+                    # See: https://docs.ros.org/en/humble/Concepts/Basic/About-Parameters.html#parameter-callbacks
                     self.key_input = value
                     return SetParametersResult(successful=True)
         return SetParametersResult(successful=False)
