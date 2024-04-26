@@ -83,12 +83,11 @@ class I2C(Node):
             exit(1)
         
         water_density = ms5837.DENSITY_FRESHWATER  # set value for the density of fresh water
-        g = 9.81  # gravitational acceleration in m/s^2
         sensor.setFluidDensity(water_density)  # Set fluid density 997 kg/m^3
         pascal = ms5837.UNITS_Pa
 
         timer_period = 0.5  # space messages out by 0.5 seconds
-        self.timer = self.create_timer(timer_period, self.pressure_callback)  # create a timer for when th
+        self.timer = self.create_timer(timer_period, self.pressure_callback)  # create a timer for when call back is called
 
     def imu_callback(self):
         msg = Imu()
