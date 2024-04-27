@@ -32,10 +32,10 @@ from rclpy.node import Node
 # ROS messages imports
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
-from std_msgs.msg import Bool
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 
+from seahawk_deck.set_remote_params import SetRemoteParams
 from seahawk_msgs.msg import InputStates, ClawStates
 
 class StickyButton():
@@ -103,6 +103,8 @@ class PilotInput(Node):
         self.add_on_set_parameters_callback(self.update_key_stroke)
         # Variable of type string for storing hot keys for throttle curves
         self.key_input = self.get_parameter("throttle_curve_choice").value
+
+        self.set_thrust_params = SetRemoteParams(self, "thrust")
 
         # Button mapping
         self.buttons = {
@@ -238,6 +240,8 @@ class PilotInput(Node):
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
             self.buttons["bambi_mode"].reset()
+            self.set_thrust_params.update_params("center_of_mass_offset", [0.0, 0.0, 0.0])
+            self.set_thrust_params.send_params()
 
 
 def main(args=None):

@@ -217,7 +217,7 @@ class MainWindow(qtw.QMainWindow):
         """
         Updates display of CoM widget each time the parameter is updated
         """
-        print("update called")
+        self.com_shift = self.ros_qt_bridge.com_shift
         self.tab_widget.com_shift_widget.update(self.ros_qt_bridge.com_shift)
 
     def keyPressEvent(self, a0: QKeyEvent) -> None:
