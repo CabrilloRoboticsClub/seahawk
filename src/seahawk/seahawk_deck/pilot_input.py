@@ -105,6 +105,7 @@ class PilotInput(Node):
         self.key_input = self.get_parameter("throttle_curve_choice").value
 
         self.set_thrust_params = SetRemoteParams(self, "thrust")
+        self.prev_com = 0
 
         # Button mapping
         self.buttons = {
@@ -185,8 +186,7 @@ class PilotInput(Node):
             "neg_linear_z":     joy_msg.axes[2],                # left_trigger
             "pos_linear_z":     joy_msg.axes[5],                # right_trigger
             # Dpad
-            # "":               int(max(joy_msg.axes[7], 0)),   # dpad_up
-            # "":               int(-min(joy_msg.axes[7], 0)),  # dpad_down
+            "com_shift":        int(joy_msg.axes[7]),           # dpad_up (1.0) /down (-1.0)
             # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left
             # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right
             # Buttons
@@ -232,14 +232,25 @@ class PilotInput(Node):
         self.claw_pub.publish(claw_msg)
 
         # Publish input states message for the dashboard
+        # FIXME: This seems a bit excessive for only bambi mode. Make a parameter?? 
         input_states_msg = InputStates()
         input_states_msg.bambi_mode = bambi_state
-        input_states_msg.com_shift = False
+        input_states_msg.com_shift = False  # Not using, uses a param callback now
         self.input_states_pub.publish(input_states_msg)
 
+        # CoM shift: dpad up/down modifies linear CoM shift along orig CoM to claw
+        if self.prev_com != (com_shift:=controller["com_shift"]):
+            # This is really weird because two nodes are setting the same parameter ???????
+            
+            # self.set_params.update_params("param_name", param_val)
+            # self.set_params.send_params()
+            self.prev_com = com_shift
+    
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
             self.buttons["bambi_mode"].reset()
+            # TODO: Reset throttle curve here also
+            # NOTE: This means it must also be updated on the dash...fun
             self.set_thrust_params.update_params("center_of_mass_offset", [0.0, 0.0, 0.0])
             self.set_thrust_params.send_params()
 
