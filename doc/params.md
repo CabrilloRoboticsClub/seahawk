@@ -28,21 +28,21 @@
     from rclpy.parameter import Parameter
     from rcl_interfaces.msg import SetParametersResult
     ```
-2. Within the `__init__()` function declare a parameter. Below is an example from [`thrust.py`](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/blob/main/src/seahawk/seahawk_deck/thrust.py), additional examples can be found [here](https://roboticsbackend.com/rclpy-params-tutorial-get-set-ros2-params-with-python/#Setup_code_and_declare_ROS2_params_with_rclpy).
+2. Within the `__init__()` function declare a parameter. Below is an example from [`pilot_input.py`](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/blob/main/src/seahawk/seahawk_deck/pilot_input.py), additional examples can be found [here](https://roboticsbackend.com/rclpy-params-tutorial-get-set-ros2-params-with-python/#Setup_code_and_declare_ROS2_params_with_rclpy).
     ```py
-    # Parameter name is center_of_mass_offset
-    # Its initial value is [0.0, 0.0, 0.0]
-    self.declare_parameter("center_of_mass_offset", [0.0, 0.0, 0.0])
+    # Parameter name is throttle_curve_choice
+    # Its initial value is 1
+    self.declare_parameter("throttle_curve_choice", 1)
     ```
 3. Create a parameter callback using `add_on_set_parameters_callback`.
     ```py
-    # self.update_center_of_mass is the function called,
+    # self.update_key_stroke is the function called,
     # it can have any name deemed descriptive
-    self.add_on_set_parameters_callback(self.update_center_of_mass)
+    self.add_on_set_parameters_callback(self.update_key_stroke)
     ```
-4. Write the function called when a parameter is updated. Add any logic deemed necessary. It is recommended to store the parameter in an attribute which is then accessed by the class if the value is used outside the callback. Below is an example from [`thrust.py`](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/blob/main/src/seahawk/seahawk_deck/thrust.py).
+4. Write the function called when a parameter is updated. Add any logic deemed necessary. It is recommended to store the parameter in an attribute which is then accessed by the class if the value is used outside the callback. Below is an example from [`pilot_input.py`](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/blob/main/src/seahawk/seahawk_deck/pilot_input.py).
     ```py
-    def update_center_of_mass(self, params: list[Parameter]) -> SetParametersResult:
+    def update_key_stroke (self, params: list[Parameter]) -> SetParametersResult:
         """
         Callback for parameter update. Updates the Center of Mass offset 
         and the motor and inverse config afterwards.
@@ -54,16 +54,14 @@
             SetParametersResult() which lets ROS2 know if the parameters were 
             set correctly or not
         """
-        # Get the new value of the parameter and temporarily store it
-        center_of_mass_offset = self.get_parameter("center_of_mass_offset").value
-        # Any logic surrounding allowed values the parameter can be set to, or
-        # things which should happen if the parameter is updated here
-        if len(center_of_mass_offset) != 3:
-            return SetParametersResult(successful=False)
-        self.motor_config = self.generate_motor_config(center_of_mass_offset)
-        self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
-        # Return the result of setting the parameter, successful=True or False
-        return SetParametersResult(successful=True)
+        for param in params:
+            if param.name == "throttle_curve_choice":
+                if (value:=param.value) in {1, 2, 3}:
+                    # Note: If this is causing issues, maybe move to a separate callback
+                    # See: https://docs.ros.org/en/humble/Concepts/Basic/About-Parameters.html#parameter-callbacks
+                    self.key_input = value
+                    return SetParametersResult(successful=True)
+        return SetParametersResult(successful=False))
     ```
 
 ## Other notes for ROS parameters
