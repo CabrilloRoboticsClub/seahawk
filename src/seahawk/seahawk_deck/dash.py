@@ -11,6 +11,7 @@ import rclpy
 from rclpy.node import Node 
 from rclpy.publisher import Publisher
 from std_msgs.msg import String
+from rcl_interfaces.msg import ParameterEvent
 from sensor_msgs.msg import Image
 
 from seahawk_deck.dash_styling.color_palette import DARK_MODE, LIGHT_MODE
@@ -40,6 +41,7 @@ class RosQtBridge(qtw.QWidget):
     new_cam_front_msg_sgl = qtc.pyqtSignal()
     new_cam_claw_msg_sgl = qtc.pyqtSignal()
     new_cam_top_msg_sgl = qtc.pyqtSignal()
+    new_com_param_sgl = qtc.pyqtSignal()
     new_publisher_sgl = qtc.pyqtSignal()
     new_set_params_sgl = qtc.pyqtSignal()
 
@@ -53,6 +55,7 @@ class RosQtBridge(qtw.QWidget):
         self.cam_front_msg = None 
         self.cam_claw_msg = None
         self.cam_top_msg = None
+        self.com_shift = None
         self.keystroke_pub = None
         self.pilot_input_set_params = None
 
@@ -103,6 +106,19 @@ class RosQtBridge(qtw.QWidget):
         """
         self.cam_top_msg = msg
         self.new_cam_top_msg_sgl.emit()
+    
+    def param_event_callback(self, msg: ParameterEvent):
+        """
+        Called for each time a parameter is modified on the ROS network.
+
+        Args:
+            msg: Parameter event which has occurred.
+        """
+        if msg.node == "/thrust":
+            for param in msg.changed_parameters:
+                if param.name == "center_of_mass_offset":
+                    self.com_shift = param.value.double_array_value
+                    self.new_com_param_sgl.emit()
 
     def add_publisher(self, pub: Publisher):
         """
@@ -160,6 +176,7 @@ class MainWindow(qtw.QMainWindow):
         super().__init__()
 
         self.ros_qt_bridge = ros_qt_bridge
+        self.ros_qt_bridge.new_com_param_sgl.connect(self.com_param_callback)
         self.ros_qt_bridge.new_publisher_sgl.connect(self.init_publisher)
         self.ros_qt_bridge.new_set_params_sgl.connect(self.add_set_params)
         self.keystroke_pub = None
@@ -194,6 +211,14 @@ class MainWindow(qtw.QMainWindow):
         """
         self.pilot_input_set_params = self.ros_qt_bridge.pilot_input_set_params
         self.thrust_set_params = self.ros_qt_bridge.thrust_set_params
+    
+    @qtc.pyqtSlot()
+    def com_param_callback(self):
+        """
+        Updates display of CoM widget each time the parameter is updated
+        """
+        print("update called")
+        self.tab_widget.com_shift_widget.update(self.ros_qt_bridge.com_shift)
 
     def keyPressEvent(self, a0: QKeyEvent) -> None:
         """
@@ -227,7 +252,6 @@ class MainWindow(qtw.QMainWindow):
             self.com_shift[ord(self.com_choice) - 88] += 0.01 if data in {"+", "="} else -0.01
             self.thrust_set_params.update_params("center_of_mass_offset", self.com_shift)
             self.thrust_set_params.send_params()
-            self.tab_widget.com_shift_widget.update(self.com_shift)
 
         # Change colors mode between light and dark mode
         if data == "0":
@@ -486,12 +510,12 @@ class Dash(Node):
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
+        self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.param_event_callback, 10)
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))
 
         # Comment this out if we want to test the dashboard without parameters (will crash otherwise)
         ros_qt_bridge.add_set_params(SetRemoteParams(self, "pilot_input"), SetRemoteParams(self, "thrust"))
-
 
 def fix_term():
     """
