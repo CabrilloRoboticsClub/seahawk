@@ -55,7 +55,7 @@ class RosQtBridge(qtw.QWidget):
         self.cam_front_msg = None 
         self.cam_claw_msg = None
         self.cam_top_msg = None
-        self.com_shift = None
+        self.com = None
         self.keystroke_pub = None
         self.pilot_input_set_params = None
 
@@ -116,8 +116,8 @@ class RosQtBridge(qtw.QWidget):
         """
         if msg.node == "/thrust":
             for param in msg.changed_parameters:
-                if param.name == "center_of_mass_offset":
-                    self.com_shift = param.value.double_array_value
+                if param.name == "center_of_mass":
+                    self.com = param.value.double_array_value
                     self.new_com_param_sgl.emit()
 
     def add_publisher(self, pub: Publisher):
@@ -217,8 +217,8 @@ class MainWindow(qtw.QMainWindow):
         """
         Updates display of CoM widget each time the parameter is updated
         """
-        self.com_shift = self.ros_qt_bridge.com_shift
-        self.tab_widget.com_shift_widget.update(self.ros_qt_bridge.com_shift)
+        # self.com_shift = self.ros_qt_bridge.com_shift
+        self.tab_widget.com_shift_widget.update(self.ros_qt_bridge.com)
 
     def keyPressEvent(self, a0: QKeyEvent) -> None:
         """
@@ -247,10 +247,10 @@ class MainWindow(qtw.QMainWindow):
             self.com_choice = data
         elif data not in {"-", "+", "=", "Invalid key"}:
             self.com_choice = None
-
+    
         if self.com_choice and data in {"-", "+", "="}:
-            self.com_shift[ord(self.com_choice) - 88] += 0.01 if data in {"+", "="} else -0.01
-            self.thrust_set_params.update_params("center_of_mass_offset", self.com_shift)
+            increment = [0.0 if i != ord(self.com_choice) - 88 else 0.01 if data in {"+", "="} else -0.01 for i in range(3)]
+            self.thrust_set_params.update_params("center_of_mass_increment", increment)
             self.thrust_set_params.send_params()
 
         # Change colors mode between light and dark mode

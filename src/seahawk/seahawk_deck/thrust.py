@@ -81,7 +81,9 @@ class Thrust(Node):
         self.declare_parameter("publishing_pwm", True)
 
         self.center_of_mass = [0.0, 0.0, 0.0]
-        self.declare_parameter("center_of_mass_increment", self.center_of_mass )
+        self.declare_parameter("center_of_mass", self.center_of_mass)
+
+        self.declare_parameter("center_of_mass_increment", [0.0, 0.0, 0.0])
         self.add_on_set_parameters_callback(self.update_center_of_mass)
 
         self.motor_config = self.generate_motor_config(self.center_of_mass)
@@ -176,9 +178,10 @@ class Thrust(Node):
         # Where `center_of_mass_increment` is a param set by either `pilot_input` or `dash` 
         for param in params:
             if param.name == "center_of_mass_increment":
-                if (value:=param.value.tolist()).len() == 3:
+                if len(value:=param.value.tolist()) == 3:
                     for i, inc in enumerate(value):
                         self.center_of_mass[i] += inc
+                    self.set_parameters([Parameter(name="center_of_mass", value=self.center_of_mass)])
                     self.motor_config = self.generate_motor_config(self.center_of_mass)
                     self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
                     return SetParametersResult(successful=True)
