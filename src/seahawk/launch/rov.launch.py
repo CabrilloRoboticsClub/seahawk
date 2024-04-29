@@ -41,6 +41,12 @@ def generate_launch_description():
             name='claws',
             output='screen'
         ),
+        Node(
+            package='seahawk',
+            executable='i2c',
+            name='i2c',
+            output='screen'
+        ),
     ]
 
     if front_camera_path is not None and pathlib.Path(front_camera_path).exists():
