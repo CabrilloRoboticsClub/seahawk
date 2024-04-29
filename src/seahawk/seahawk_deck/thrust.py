@@ -80,10 +80,10 @@ class Thrust(Node):
 
         self.declare_parameter("publishing_pwm", True)
 
-        self.center_of_mass = [0.0, 0.0, 0.0]
+        self.center_of_mass = [0.0] * 3
         self.declare_parameter("center_of_mass", self.center_of_mass)
 
-        self.declare_parameter("center_of_mass_increment", [0.0, 0.0, 0.0])
+        self.declare_parameter("center_of_mass_increment", self.center_of_mass)
         self.add_on_set_parameters_callback(self.update_center_of_mass)
 
         self.motor_config = self.generate_motor_config(self.center_of_mass)
