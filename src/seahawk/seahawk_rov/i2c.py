@@ -71,9 +71,9 @@ class I2C(Node):
         #     print("SENSOR READ FAILED.")
         #     exit(1)
         
-        water_density = ms5837.DENSITY_FRESHWATER  # set value for the density of fresh water
-        sensor.setFluidDensity(water_density)  # Set fluid density 997 kg/m^3
-        pascal = ms5837.UNITS_Pa
+        # water_density = ms5837.DENSITY_FRESHWATER  # set value for the density of fresh water
+        # sensor.setFluidDensity(water_density)  # Set fluid density 997 kg/m^3
+        # pascal = ms5837.UNITS_Pa
 
         self.create_timer(0.5, self.pub_callback)
     
@@ -81,44 +81,9 @@ class I2C(Node):
         self.bno085.pub_callback()
         self.bme280.pub_callback()
 
-
     # def pressure_callback(self):
     #     pressure_msg = PressureSensor()  # create a obj of type Pressure
     #     pressure_msg.pressure = sensor.pressure(pascal)
-        timer_period = 0.5  # space messages out by 0.5 seconds
-        self.timer = self.create_timer(timer_period, self.pressure_callback)  # create a timer for when call back is called
-
-    def imu_callback(self):
-        msg = Imu()
-        msg.header.frame_id = "bno085"
-
-        msg.orientation.x = self.bno085.geomagnetic_quaternion[1]
-        msg.orientation.y = -self.bno085.geomagnetic_quaternion[0]
-        msg.orientation.z = self.bno085.geomagnetic_quaternion[2]
-        msg.orientation.w = self.bno085.geomagnetic_quaternion[3]
-        msg.angular_velocity.x = self.bno085.gyro[1]
-        msg.angular_velocity.y = -self.bno085.gyro[0]
-        msg.angular_velocity.z = self.bno085.gyro[2]
-        msg.linear_acceleration.x = self.bno085.linear_acceleration[1]
-        msg.linear_acceleration.y = -self.bno085.linear_acceleration[0]
-        msg.linear_acceleration.z = self.bno085.linear_acceleration[2]
-
-        # Is this the right place for this??
-        try:
-            self.imu_pub.publish(msg)
-        except:
-            self.node.get_logger().info("Warning: IMU failed to publish")
-        
-    def bme_callback(self):
-        msg = Bme280()
-        msg.temperature = self.bme280.temperature
-        msg.humidity = self.bme280.humidity
-        msg.pressure = self.bme280.pressure
-        self.bme_pub.publish(msg)
-
-    def pressure_callback(self):
-        pressure_msg = PressureSensor()  # create a obj of type Pressure
-        pressure_msg.pressure = sensor.pressure(pascal)
 
     #     pressure_msg.depth sensor.depth()
     #     self.pressure_publisher_.publish(pressure_msg)  # publish depth_msg to depth_topic
