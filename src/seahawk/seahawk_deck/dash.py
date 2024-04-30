@@ -55,7 +55,7 @@ class RosQtBridge(qtw.QWidget):
         self.cam_front_msg = None 
         self.cam_claw_msg = None
         self.cam_top_msg = None
-        self.com = None
+        self.com = [0.0] * 3
         self.keystroke_pub = None
         self.pilot_input_set_params = None
 
@@ -116,8 +116,12 @@ class RosQtBridge(qtw.QWidget):
         """
         if msg.node == "/thrust":
             for param in msg.changed_parameters:
-                if param.name == "center_of_mass":
-                    self.com = param.value.double_array_value
+                if param.name == "center_of_mass_increment":
+                    if list(param.value.double_array_value)[0:3] == [0.0] * 3:
+                        self.com = [0.0] * 3
+                    else:
+                        for i, val in enumerate(param.value.double_array_value):
+                            self.com[i] += val
                     self.new_com_param_sgl.emit()
 
     def add_publisher(self, pub: Publisher):

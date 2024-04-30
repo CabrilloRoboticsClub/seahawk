@@ -239,19 +239,16 @@ class PilotInput(Node):
         self.input_states_pub.publish(input_states_msg)
 
         # CoM shift: dpad up/down modifies linear CoM shift along orig CoM to claw
-        if self.prev_com != (com_shift:=controller["com_shift"]):
-            # This is really weird because two nodes are setting the same parameter ???????
-            
-            # self.set_params.update_params("param_name", param_val)
-            # self.set_params.send_params()
-            self.prev_com = com_shift
+        if (com_shift:=controller["com_shift"]):            
+            self.set_thrust_params.update_params("center_of_mass_increment", [0.01 * com_shift, 0.0, 0.0])
+            self.set_thrust_params.send_params()
     
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
             self.buttons["bambi_mode"].reset()
             # TODO: Reset throttle curve here also
             # NOTE: This means it must also be updated on the dash...fun
-            self.set_thrust_params.update_params("center_of_mass_offset", [0.0, 0.0, 0.0])
+            self.set_thrust_params.update_params("center_of_mass_increment", [0.0, 0.0, 0.0])
             self.set_thrust_params.send_params()
 
 

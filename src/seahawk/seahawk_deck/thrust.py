@@ -179,6 +179,9 @@ class Thrust(Node):
         for param in params:
             if param.name == "center_of_mass_increment":
                 if len(value:=param.value.tolist()) == 3:
+                    if (value == [0.0] * 3):
+                        self.center_of_mass = value
+                        return SetParametersResult(successful=True)
                     for i, inc in enumerate(value):
                         self.center_of_mass[i] += inc
                     self.set_parameters([Parameter(name="center_of_mass", value=self.center_of_mass)])
