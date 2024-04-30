@@ -32,10 +32,10 @@ from rclpy.node import Node
 # ROS messages imports
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
-from std_msgs.msg import Bool
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 
+from seahawk_deck.set_remote_params import SetRemoteParams
 from seahawk_msgs.msg import InputStates, ClawStates
 
 class StickyButton():
@@ -103,6 +103,9 @@ class PilotInput(Node):
         self.add_on_set_parameters_callback(self.update_key_stroke)
         # Variable of type string for storing hot keys for throttle curves
         self.key_input = self.get_parameter("throttle_curve_choice").value
+
+        self.set_thrust_params = SetRemoteParams(self, "thrust")
+        self.prev_com = 0
 
         # Button mapping
         self.buttons = {
@@ -183,8 +186,7 @@ class PilotInput(Node):
             "neg_linear_z":     joy_msg.axes[2],                # left_trigger
             "pos_linear_z":     joy_msg.axes[5],                # right_trigger
             # Dpad
-            # "":               int(max(joy_msg.axes[7], 0)),   # dpad_up
-            # "":               int(-min(joy_msg.axes[7], 0)),  # dpad_down
+            "com_shift":        int(joy_msg.axes[7]),           # dpad_up (1.0) /down (-1.0)
             # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left
             # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right
             # Buttons
@@ -230,14 +232,24 @@ class PilotInput(Node):
         self.claw_pub.publish(claw_msg)
 
         # Publish input states message for the dashboard
+        # FIXME: This seems a bit excessive for only bambi mode. Make a parameter?? 
         input_states_msg = InputStates()
         input_states_msg.bambi_mode = bambi_state
-        input_states_msg.com_shift = False
+        input_states_msg.com_shift = False  # Not using, uses a param callback now
         self.input_states_pub.publish(input_states_msg)
 
+        # CoM shift: dpad up/down modifies linear CoM shift along orig CoM to claw
+        if (com_shift:=controller["com_shift"]):            
+            self.set_thrust_params.update_params("center_of_mass_increment", [0.01 * com_shift, 0.0, 0.0])
+            self.set_thrust_params.send_params()
+    
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
             self.buttons["bambi_mode"].reset()
+            # TODO: Reset throttle curve here also
+            # NOTE: This means it must also be updated on the dash...fun
+            self.set_thrust_params.update_params("center_of_mass_increment", [0.0, 0.0, 0.0])
+            self.set_thrust_params.send_params()
 
 
 def main(args=None):

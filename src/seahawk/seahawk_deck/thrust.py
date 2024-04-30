@@ -72,18 +72,21 @@ class Thrust(Node):
             [    0.0,     0.0,  1.0],   # Motor 1 
             [    0.0,     0.0,  1.0],   # Motor 2
             [    0.0,     0.0, -1.0],   # Motor 3
-            [-0.7071, 0.7071,  0.0],   # Motor 4
+            [-0.7071,  0.7071,  0.0],   # Motor 4
             [-0.7071, -0.7071,  0.0],   # Motor 5
-            [ 0.7071, 0.7071,  0.0],   # Motor 6
+            [ 0.7071,  0.7071,  0.0],   # Motor 6
             [ 0.7071, -0.7071,  0.0]    # Motor 7
         ]
 
-        self.declare_parameter("center_of_mass_offset", [0.0, 0.0, 0.0])
         self.declare_parameter("publishing_pwm", True)
 
+        self.center_of_mass = [0.0] * 3
+        self.declare_parameter("center_of_mass", self.center_of_mass)
+
+        self.declare_parameter("center_of_mass_increment", self.center_of_mass)
         self.add_on_set_parameters_callback(self.update_center_of_mass)
 
-        self.motor_config = self.generate_motor_config(self.get_parameter("center_of_mass_offset").value)
+        self.motor_config = self.generate_motor_config(self.center_of_mass)
         self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
 
         if self.get_parameter("publishing_pwm").value:
@@ -170,12 +173,22 @@ class Thrust(Node):
         Returns:
             SetParametersResult() which lets ROS2 know if the parameters were set correctly or not
         """
-        center_of_mass_offset = params[0]._value.tolist()
-        if len(center_of_mass_offset) != 3:
-            return SetParametersResult(successful=False)
-        self.motor_config = self.generate_motor_config(center_of_mass_offset)
-        self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
-        return SetParametersResult(successful=True)
+
+
+        # Where `center_of_mass_increment` is a param set by either `pilot_input` or `dash` 
+        for param in params:
+            if param.name == "center_of_mass_increment":
+                if len(value:=param.value.tolist()) == 3:
+                    if (value == [0.0] * 3):
+                        self.center_of_mass = value
+                        return SetParametersResult(successful=True)
+                    for i, inc in enumerate(value):
+                        self.center_of_mass[i] += inc
+                    self.set_parameters([Parameter(name="center_of_mass", value=self.center_of_mass)])
+                    self.motor_config = self.generate_motor_config(self.center_of_mass)
+                    self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
+                    return SetParametersResult(successful=True)
+        return SetParametersResult(successful=False)
 
     def generate_motor_config(self, center_of_mass_offset):
         """
@@ -206,8 +219,7 @@ class Thrust(Node):
 
         Args:
             x: Thrust being produced in newtons.
-            a-f: Arbitrary parameters to map thrust to current, see generate_thrust_fit_params
-()
+            a-f: Arbitrary parameters to map thrust to current, see generate_thrust_fit_params()
 
         Returns:
             Current (estimated) to be drawn in amps.
