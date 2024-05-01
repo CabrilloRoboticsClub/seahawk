@@ -29,6 +29,7 @@ from rclpy.node import Node
 
 from seahawk_rov.i2c_sensors.bno085 import BNO085
 from seahawk_rov.i2c_sensors.bme280 import BME280
+from seahawk_rov.i2c_sensors.pressure import Pressure
 
 # from seahawk_msgs.msg import PressureSensor
 # import ms5837
@@ -51,35 +52,14 @@ class I2C(Node):
         i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
         self.bno085 = BNO085(self, i2c)  # IMU
         self.bme280 = BME280(self, i2c)  # Pressure, Temperature, Humidity
-        
-
-        # PRESSURE SENSOR
-        # TODO: Migrate all this code to its own class
-        # self.pressure_publisher_ = self.create_publisher(PressureSensor, 'pressure_topic', 10)  # create a publisher that publishes messages of type String to pressure_topic
-
-        # sensor = ms5837.MS5837(model=ms5837.MS5837_MODEL_30BA, i2c_bus=i2c) # Specify model and bus
-
-        # sensor.init()  # initialize the sensor
-
-        # if not sensor.init():
-        #     print("SENSOR READ FAILED.")
-        #     exit(1)
-
-        # sensor.read(ms5837.OSR_256)  # Read the sensor and update the pressure and temperature.
-
-        # if not sensor.read():
-        #     print("SENSOR READ FAILED.")
-        #     exit(1)
-        
-        # water_density = ms5837.DENSITY_FRESHWATER  # set value for the density of fresh water
-        # sensor.setFluidDensity(water_density)  # Set fluid density 997 kg/m^3
-        # pascal = ms5837.UNITS_Pa
+        self.pressure = Pressure(self, i2c)
 
         self.create_timer(0.5, self.pub_callback)
     
     def pub_callback(self):
         self.bno085.pub_callback()
         self.bme280.pub_callback()
+        self.pressure.pub_callback()
 
     # def pressure_callback(self):
     #     pressure_msg = PressureSensor()  # create a obj of type Pressure

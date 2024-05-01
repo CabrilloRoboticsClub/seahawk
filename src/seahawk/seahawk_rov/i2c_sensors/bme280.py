@@ -39,7 +39,7 @@ class BME280:
         Initialize `BME280` object.
         """
         self.node = node
-        self.publisher = node.create_publisher(Bme280, "bme280", 10)
+        self.publisher = self.node.create_publisher(Bme280, "bme280", 10)
         self.bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c, i2c_addr)
 
     def pub_callback(self):
@@ -51,3 +51,5 @@ class BME280:
         msg.humidity = self.bme280.humidity
         msg.pressure = self.bme280.pressure
         self.publisher.publish(msg)
+
+
