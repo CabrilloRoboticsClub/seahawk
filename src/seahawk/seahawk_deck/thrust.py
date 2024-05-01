@@ -55,6 +55,9 @@ class Thrust(Node):
         self.TOTAL_CURRENT_LIMIT = 70 # A
         self.ESC_CURRENT_LIMIT = 40 # A
 
+        # x 0.04m
+        # y 0.025m
+        # z -0.01m
         self.motor_positions = [ # [X, Y, Z] positions for each motors
             [ 0.200,  0.130,  0.004], # Motor 0
             [ 0.200, -0.130,  0.047], # Motor 1
@@ -65,6 +68,8 @@ class Thrust(Node):
             [-0.198,  0.156, -0.038], # Motor 6
             [-0.198, -0.156, -0.038]  # Motor 7
         ]
+        self.motor_positions = [(np.subtract(motor, [0.04, 0.025, -0.01]).tolist())
+                                for motor in self.motor_positions]
         # (modified for bad props, hardware is stupid, the people not the concept)
         # TODO: eventually remove negs
         self.motor_thrusts = [ # [X, Y, Z] components of thrust for each motor
@@ -81,7 +86,6 @@ class Thrust(Node):
         self.declare_parameter("publishing_pwm", True)
 
         self.center_of_mass = [0.0] * 3
-        self.declare_parameter("center_of_mass", self.center_of_mass)
 
         self.declare_parameter("center_of_mass_increment", self.center_of_mass)
         self.add_on_set_parameters_callback(self.update_center_of_mass)
@@ -181,10 +185,9 @@ class Thrust(Node):
                 if len(value:=param.value.tolist()) == 3:
                     if (value == [0.0] * 3):
                         self.center_of_mass = value
-                        return SetParametersResult(successful=True)
-                    for i, inc in enumerate(value):
-                        self.center_of_mass[i] += inc
-                    self.set_parameters([Parameter(name="center_of_mass", value=self.center_of_mass)])
+                    else:
+                        for i, inc in enumerate(value):
+                            self.center_of_mass[i] += inc
                     self.motor_config = self.generate_motor_config(self.center_of_mass)
                     self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
                     return SetParametersResult(successful=True)

@@ -204,7 +204,7 @@ class PilotInput(Node):
         # Create twist message
         twist_msg = Twist()
         twist_msg.linear.x  = self.throttle_curve(controller["linear_x"])  # forwards
-        twist_msg.linear.y  = self.throttle_curve(-controller["linear_y"])   # sideways
+        twist_msg.linear.y  = -self.throttle_curve(-controller["linear_y"])   # sideways
         twist_msg.linear.z  = self.throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))       # depth
         twist_msg.angular.x = -self.throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5)     # roll (const +/- 0.5 thrust)
         twist_msg.angular.y = self.throttle_curve(controller["angular_y"])   # pitch
