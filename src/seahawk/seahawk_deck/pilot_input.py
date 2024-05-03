@@ -115,7 +115,7 @@ class PilotInput(Node):
             "bambi_mode":       StickyButton(),     # b
             "main_claw":        StickyButton(),     # x
             "claw_1":           StickyButton(),     # y
-            # "":               StickyButton(),     # window
+            "kill":             StickyButton(),     # window
             # "":               StickyButton(),     # menu
         }
 
@@ -196,19 +196,29 @@ class PilotInput(Node):
             "claw_1":           joy_msg.buttons[3], # y
             "pos_angular_x":    joy_msg.buttons[4], # left_bumper
             "neg_angular_x":    joy_msg.buttons[5], # right_bumper
-            # "":               joy_msg.buttons[6], # window
+            "kill":             joy_msg.buttons[6], # window
             # "":               joy_msg.buttons[7], # menu
             "reset":            joy_msg.buttons[8], # xbox
         }
 
         # Create twist message
         twist_msg = Twist()
-        twist_msg.linear.x  = self.throttle_curve(controller["linear_x"])  # forwards
-        twist_msg.linear.y  = -self.throttle_curve(-controller["linear_y"])   # sideways
-        twist_msg.linear.z  = self.throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))       # depth
-        twist_msg.angular.x = -self.throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5)     # roll (const +/- 0.5 thrust)
-        twist_msg.angular.y = self.throttle_curve(controller["angular_y"])   # pitch
-        twist_msg.angular.z = self.throttle_curve(controller["angular_z"])  # yaw
+
+        # Kill motors with kill button
+        if not self.buttons["kill"].check_state(controller["kill"]):
+            twist_msg.linear.x  = self.throttle_curve(controller["linear_x"])  # forwards
+            twist_msg.linear.y  = -self.throttle_curve(-controller["linear_y"])   # sideways
+            twist_msg.linear.z  = self.throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))       # depth
+            twist_msg.angular.x = -self.throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5)     # roll (const +/- 0.5 thrust)
+            twist_msg.angular.y = self.throttle_curve(controller["angular_y"])   # pitch
+            twist_msg.angular.z = self.throttle_curve(controller["angular_z"])  # yaw
+        else:
+            twist_msg.linear.x = 0.0
+            twist_msg.linear.y = 0.0
+            twist_msg.linear.z = 0.0
+            twist_msg.angular.x = 0.0
+            twist_msg.angular.y = 0.0
+            twist_msg.angular.z = 0.0
 
         # Bambi mode cuts all twist values in half for more precise movements
         if bambi_state := self.buttons["bambi_mode"].check_state(controller["bambi_mode"]):
