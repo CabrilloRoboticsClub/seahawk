@@ -132,6 +132,7 @@
       - { name: 'theo', comment: 'Theo Paris', ghuser: 'theoparis'}
       - { name: 'whitlockmcorbett', comment: 'Corbett Whitlock', ghuser: 'whitlockmcorbett'}
       - { name: 'daniel', comment: 'Daniel Bledsoe', ghuser: 'epic-coding-23' }
+      - { name: 'rowan', comment: 'Rowan Garties', ghuser: 'Ronin2837'}
   tasks:
     - name: Add user
       ansible.builtin.user:
