@@ -315,6 +315,7 @@ class TabWidget(qtw.QWidget):
 
         # Initialize tabs
         tabs = qtw.QTabWidget()
+        tabs.currentChanged.connect(self.tab_changed)
 
         # Create a dict in which the key is the provided name of the tab, and the value is a qtw.QWidget() object
         tab_names = ["Pilot", "Co-Pilot", "Debug", "Control Mapping"]
@@ -335,6 +336,7 @@ class TabWidget(qtw.QWidget):
 
         # Apply css styling
         self.set_colors(self.colors)
+
     
     def set_colors(self, new_colors: dict):
         """
@@ -411,6 +413,19 @@ class TabWidget(qtw.QWidget):
 
         home_window_layout.addLayout(vert_widgets_layout, stretch=1)
         home_window_layout.addLayout(cam_layout, stretch=9)
+
+    def tab_changed(self, index):
+        """
+        Triggered `currentChanged` signal which is activated when the user changes tabs.
+
+        Sets focus to the entire tab area to avoid bug of selecting text edit areas.
+
+        Args:
+            index: Index of the currently selected tab.
+        """
+        for i, tab in enumerate(self.tab_dict.values()):
+            if i == index:
+                tab.setFocus()
 
     @staticmethod
     def update_cam_img(data: Image, video_frame: VideoFrame):
