@@ -317,7 +317,7 @@ class TabWidget(qtw.QWidget):
         tabs = qtw.QTabWidget()
 
         # Create a dict in which the key is the provided name of the tab, and the value is a qtw.QWidget() object
-        tab_names = ["Pilot", "Co-Pilot", "VPF", "Debug", "Cameras", "Control Mapping"]
+        tab_names = ["Pilot", "Co-Pilot", "Debug", "Control Mapping"]
         self.tab_dict = {name: qtw.QWidget() for name in tab_names}
 
         # Add tabs
