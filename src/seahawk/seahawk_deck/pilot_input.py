@@ -187,8 +187,8 @@ class PilotInput(Node):
             "pos_linear_z":     joy_msg.axes[5],                # right_trigger
             # Dpad
             "com_shift":        int(joy_msg.axes[7]),           # dpad_up (1.0) /down (-1.0)
-            # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left
-            # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right
+            # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left  (used for spinny thing)
+            # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right (used for spinny thing)
             # Buttons
             "claw_2":           joy_msg.buttons[0], # a
             "bambi_mode":       joy_msg.buttons[1], # b
@@ -205,17 +205,17 @@ class PilotInput(Node):
         twist_msg = Twist()
 
         # Kill motors with kill button
-        if not self.buttons["kill"].check_state(controller["kill"]):
-            twist_msg.linear.x  = self.throttle_curve(controller["linear_x"])  # forwards
+        if not (kill:=self.buttons["kill"].check_state(controller["kill"])):
+            twist_msg.linear.x  = self.throttle_curve(controller["linear_x"])     # forwards
             twist_msg.linear.y  = -self.throttle_curve(-controller["linear_y"])   # sideways
-            twist_msg.linear.z  = self.throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))       # depth
-            twist_msg.angular.x = -self.throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5)     # roll (const +/- 0.5 thrust)
-            twist_msg.angular.y = self.throttle_curve(controller["angular_y"])   # pitch
-            twist_msg.angular.z = self.throttle_curve(controller["angular_z"])  # yaw
+            twist_msg.linear.z  = self.throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))    # depth
+            twist_msg.angular.x = -self.throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5) # roll (const +/- 0.5 thrust)
+            twist_msg.angular.y = self.throttle_curve(controller["angular_y"])    # pitch
+            twist_msg.angular.z = self.throttle_curve(controller["angular_z"])    # yaw
         else:
-            twist_msg.linear.x = 0.0
-            twist_msg.linear.y = 0.0
-            twist_msg.linear.z = 0.0
+            twist_msg.linear.x  = 0.0
+            twist_msg.linear.y  = 0.0
+            twist_msg.linear.z  = 0.0
             twist_msg.angular.x = 0.0
             twist_msg.angular.y = 0.0
             twist_msg.angular.z = 0.0
@@ -235,17 +235,17 @@ class PilotInput(Node):
         # Create claw message
         claw_msg = ClawStates()
         claw_msg.main_claw = self.buttons["main_claw"].check_state(controller["main_claw"])
-        claw_msg.claw_1 = self.buttons["claw_1"].check_state(controller["claw_1"])
-        claw_msg.claw_2 = self.buttons["claw_2"].check_state(controller["claw_2"])
+        claw_msg.claw_1    = self.buttons["claw_1"].check_state(controller["claw_1"])
+        claw_msg.claw_2    = self.buttons["claw_2"].check_state(controller["claw_2"])
 
         # Publish claw message
         self.claw_pub.publish(claw_msg)
 
         # Publish input states message for the dashboard
-        # FIXME: This seems a bit excessive for only bambi mode. Make a parameter?? 
+        # FIXME: Consider making this parameters
         input_states_msg = InputStates()
         input_states_msg.bambi_mode = bambi_state
-        input_states_msg.com_shift = False  # Not using, uses a param callback now
+        input_states_msg.kill = kill
         self.input_states_pub.publish(input_states_msg)
 
         # CoM shift: dpad up/down modifies linear CoM shift along orig CoM to claw
