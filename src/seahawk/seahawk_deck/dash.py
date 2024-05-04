@@ -244,7 +244,6 @@ class MainWindow(qtw.QMainWindow):
         if data in {"1", "2", "3"}:
             self.pilot_input_set_params.update_params("throttle_curve_choice", int(data))
             self.pilot_input_set_params.send_params()
-            self.tab_widget.thrt_crv_widget.update(int(data))
 
         # Update Com Shift
         if data in {"X", "Y", "Z"}:
@@ -481,7 +480,8 @@ class TabWidget(qtw.QWidget):
             "Kill Button":  self.ros_qt_bridge.input_state_msg.kill
         }
         self.state_widget.update(input_state_dict)
-    
+        self.thrt_crv_widget.update(self.ros_qt_bridge.input_state_msg.thrt_crv)
+
     def create_debug_tab(self, tab: qtw.QWidget):
         # Setup layouts
         debug_layout = qtw.QHBoxLayout(tab)
