@@ -151,7 +151,6 @@ class PilotInput(Node):
         """
 
         # Check value of key_input and assign it to a polynomial to modify joy_msg
-        self.get_logger().info(f"Key input: {self.key_input}")
         match self.key_input:  # functionality needs to be added for adding value to key_input
             case 1:
                 return twist_msg  # Linear joystick input, key '1'. For simple constant acceleration.
@@ -243,7 +242,6 @@ class PilotInput(Node):
         self.claw_pub.publish(claw_msg)
 
         # Publish input states message for the dashboard
-        # FIXME: Consider making this parameters
         input_states_msg = InputStates()
         input_states_msg.bambi_mode = bambi_state
         input_states_msg.kill = kill
@@ -258,7 +256,7 @@ class PilotInput(Node):
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
             self.buttons["bambi_mode"].reset()
-            # self.set_parameters([Parameter(name="throttle_curve_choice", value=1)])
+            self.set_parameters([Parameter(name="throttle_curve_choice", value=1)])
             self.set_thrust_params.update_params("center_of_mass_increment", [0.0, 0.0, 0.0])
             self.set_thrust_params.send_params()
 
