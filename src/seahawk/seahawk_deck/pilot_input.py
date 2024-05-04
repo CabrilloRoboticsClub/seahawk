@@ -250,7 +250,7 @@ class PilotInput(Node):
 
         # CoM shift: dpad up/down modifies linear CoM shift along orig CoM to claw
         if (com_shift:=controller["com_shift"]):            
-            self.set_thrust_params.update_params("center_of_mass_increment", [0.01 * com_shift, 0.0, 0.0])
+            self.set_thrust_params.update_params("center_of_mass_increment", [0.005 * com_shift, 0.0, 0.0])
             self.set_thrust_params.send_params()
     
         # If the x-box button is pressed, all settings get reset to default configurations
