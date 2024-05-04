@@ -370,7 +370,7 @@ class TabWidget(qtw.QWidget):
         cam_layout = qtw.QGridLayout()
 
         # Create widgets
-        self.state_widget = StateWidget(tab, ["Bambi Mode"], PATH + "/dash_styling/state_widget.txt", self.colors)
+        self.state_widget = StateWidget(tab, ["Bambi Mode", "Kill Button"], PATH + "/dash_styling/state_widget.txt", self.colors)
         self.com_shift_widget = TriNumericDataWidget(tab, "CoM Shift", PATH + "/dash_styling/tri_numeric_data_widget.txt", self.colors)
         self.thrt_crv_widget = ThrtCrvWidget(tab, self.colors)
         self.turn_bank_indicator_widget = TurnBankIndicator(tab, PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
@@ -380,12 +380,12 @@ class TabWidget(qtw.QWidget):
 
         # Add widgets to side vertical layout
         # Stretch modifies the ratios of the widgets (must add up to 100)
-        vert_widgets_layout.addWidget(self.state_widget, stretch=8)
+        vert_widgets_layout.addWidget(self.state_widget, stretch=13)
         vert_widgets_layout.addWidget(self.com_shift_widget, stretch=8)
         vert_widgets_layout.addWidget(self.thrt_crv_widget, stretch=18)
         vert_widgets_layout.addWidget(self.turn_bank_indicator_widget, stretch=18)
-        vert_widgets_layout.addWidget(self.temp_widget, stretch=14)
-        vert_widgets_layout.addWidget(self.depth_widget, stretch=14)
+        vert_widgets_layout.addWidget(self.temp_widget, stretch=11)
+        vert_widgets_layout.addWidget(self.depth_widget, stretch=11)
         vert_widgets_layout.addWidget(self.countdown_widget, stretch=20)
 
         # Setup cameras
@@ -463,6 +463,7 @@ class TabWidget(qtw.QWidget):
         """
         input_state_dict = {
             "Bambi Mode":   self.ros_qt_bridge.input_state_msg.bambi_mode,
+            "Kill Button":  self.ros_qt_bridge.input_state_msg.kill
         }
         self.state_widget.update(input_state_dict)
     
