@@ -2,3 +2,4 @@
 
 bool bambi_mode 
 bool kill
+int8 thrt_crv
