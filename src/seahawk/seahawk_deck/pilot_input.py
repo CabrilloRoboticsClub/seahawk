@@ -30,11 +30,13 @@ import rclpy
 from rclpy.node import Node 
 
 # ROS messages imports
-from geometry_msgs.msg import Twist 
+from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Joy
-from std_msgs.msg import Bool
-from seahawk_msgs.msg import InputStates, ClawStates
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import SetParametersResult
 
+from seahawk_deck.set_remote_params import SetRemoteParams
+from seahawk_msgs.msg import InputStates, ClawStates
 
 class StickyButton():
     """
@@ -97,8 +99,13 @@ class PilotInput(Node):
 
         # Create and store parameter which determines which throttle curve
         # the pilot wants to use named 'throttle_curve_choice'. Defaults to '0'
-        self.declare_parameter("throttle_curve_choice", "1")
-        self.throttle_curve_choice = self.get_parameter("throttle_curve_choice").value
+        self.declare_parameter("throttle_curve_choice", 1)
+        self.add_on_set_parameters_callback(self.update_key_stroke)
+        # Variable of type string for storing hot keys for throttle curves
+        self.key_input = self.get_parameter("throttle_curve_choice").value
+
+        self.set_thrust_params = SetRemoteParams(self, "thrust")
+        self.prev_com = 0
 
         # Button mapping
         self.buttons = {
@@ -108,9 +115,50 @@ class PilotInput(Node):
             "bambi_mode":       StickyButton(),     # b
             "main_claw":        StickyButton(),     # x
             "claw_1":           StickyButton(),     # y
-            # "":               StickyButton(),     # window
+            "kill":             StickyButton(),     # window
             # "":               StickyButton(),     # menu
         }
+
+
+    def update_key_stroke (self, params: list[Parameter]) -> SetParametersResult:
+        """
+        Callback for parameter update. Updates the Center of Mass offset 
+        and the motor and inverse config afterwards.
+
+        Args:
+            params: List of updated parameters (handles by ROS2)
+
+        Returns:
+            SetParametersResult() which lets ROS2 know if the parameters were 
+            set correctly or not
+        """
+        for param in params:
+            if param.name == "throttle_curve_choice":
+                if (value:=param.value) in {1, 2, 3}:
+                    # Note: If this is causing issues, maybe move to a separate callback
+                    # See: https://docs.ros.org/en/humble/Concepts/Basic/About-Parameters.html#parameter-callbacks
+                    self.key_input = value
+                    return SetParametersResult(successful=True)
+        return SetParametersResult(successful=False)
+
+
+    def throttle_curve(self, twist_msg: float):
+        """
+        Changes the value of twist messages (-1 -> 1) and fixes it to a polynomial depending on input from a keyboard
+
+        Args:
+            twist_msg: Message of type Twist from ROS2 library
+        """
+
+        # Check value of key_input and assign it to a polynomial to modify joy_msg
+        match self.key_input:  # functionality needs to be added for adding value to key_input
+            case 1:
+                return twist_msg  # Linear joystick input, key '1'. For simple constant acceleration.
+            case 2:
+                return pow(twist_msg, 3)  # Cubed joystick input, key '2'. Median between both curves.
+            case 3:
+                return pow(twist_msg, 5)  # Quintuple joystick input, key '3'. Helpful for quick acceleration.
+
 
     def callback(self, joy_msg: Joy):
         """
@@ -138,10 +186,9 @@ class PilotInput(Node):
             "neg_linear_z":     joy_msg.axes[2],                # left_trigger
             "pos_linear_z":     joy_msg.axes[5],                # right_trigger
             # Dpad
-            # "":               int(max(joy_msg.axes[7], 0)),   # dpad_up
-            # "":               int(-min(joy_msg.axes[7], 0)),  # dpad_down
-            # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left     
-            # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right
+            "com_shift":        int(joy_msg.axes[7]),           # dpad_up (1.0) /down (-1.0)
+            # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left  (used for spinny thing)
+            # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right (used for spinny thing)
             # Buttons
             "claw_2":           joy_msg.buttons[0], # a
             "bambi_mode":       joy_msg.buttons[1], # b
@@ -149,19 +196,29 @@ class PilotInput(Node):
             "claw_1":           joy_msg.buttons[3], # y
             "pos_angular_x":    joy_msg.buttons[4], # left_bumper
             "neg_angular_x":    joy_msg.buttons[5], # right_bumper
-            # "":               joy_msg.buttons[6], # window
+            "kill":             joy_msg.buttons[6], # window
             # "":               joy_msg.buttons[7], # menu
             "reset":            joy_msg.buttons[8], # xbox
         }
 
         # Create twist message
         twist_msg = Twist()
-        twist_msg.linear.x  = controller["linear_x"]    # forwards
-        twist_msg.linear.y  = -controller["linear_y"]   # sideways
-        twist_msg.linear.z  = ((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2)       # depth
-        twist_msg.angular.x = (controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5     # roll (const +/- 0.5 thrust)
-        twist_msg.angular.y = controller["angular_y"]   # pitch
-        twist_msg.angular.z = controller["angular_z"]  # yaw
+
+        # Kill motors with kill button
+        if not (kill:=self.buttons["kill"].check_state(controller["kill"])):
+            twist_msg.linear.x  = self.throttle_curve(controller["linear_x"])     # forwards
+            twist_msg.linear.y  = -self.throttle_curve(-controller["linear_y"])   # sideways
+            twist_msg.linear.z  = self.throttle_curve(((controller["neg_linear_z"] - controller["pos_linear_z"]) / 2))    # depth
+            twist_msg.angular.x = -self.throttle_curve((controller["pos_angular_x"] - controller["neg_angular_x"]) * 0.5) # roll (const +/- 0.5 thrust)
+            twist_msg.angular.y = self.throttle_curve(controller["angular_y"])    # pitch
+            twist_msg.angular.z = self.throttle_curve(controller["angular_z"])    # yaw
+        else:
+            twist_msg.linear.x  = 0.0
+            twist_msg.linear.y  = 0.0
+            twist_msg.linear.z  = 0.0
+            twist_msg.angular.x = 0.0
+            twist_msg.angular.y = 0.0
+            twist_msg.angular.z = 0.0
 
         # Bambi mode cuts all twist values in half for more precise movements
         if bambi_state := self.buttons["bambi_mode"].check_state(controller["bambi_mode"]):
@@ -171,15 +228,15 @@ class PilotInput(Node):
             twist_msg.angular.x /= 2
             twist_msg.angular.y /= 2
             twist_msg.angular.z /= 2
-     
+
         # Publish twist message
         self.twist_pub.publish(twist_msg)
 
         # Create claw message
         claw_msg = ClawStates()
         claw_msg.main_claw = self.buttons["main_claw"].check_state(controller["main_claw"])
-        claw_msg.claw_1 = self.buttons["claw_1"].check_state(controller["claw_1"])
-        claw_msg.claw_2 = self.buttons["claw_2"].check_state(controller["claw_2"])
+        claw_msg.claw_1    = self.buttons["claw_1"].check_state(controller["claw_1"])
+        claw_msg.claw_2    = self.buttons["claw_2"].check_state(controller["claw_2"])
 
         # Publish claw message
         self.claw_pub.publish(claw_msg)
@@ -187,12 +244,21 @@ class PilotInput(Node):
         # Publish input states message for the dashboard
         input_states_msg = InputStates()
         input_states_msg.bambi_mode = bambi_state
-        input_states_msg.com_shift = False
+        input_states_msg.kill = kill
+        input_states_msg.thrt_crv = self.key_input
         self.input_states_pub.publish(input_states_msg)
 
+        # CoM shift: dpad up/down modifies linear CoM shift along orig CoM to claw
+        if (com_shift:=controller["com_shift"]):            
+            self.set_thrust_params.update_params("center_of_mass_increment", [0.005 * com_shift, 0.0, 0.0])
+            self.set_thrust_params.send_params()
+    
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
             self.buttons["bambi_mode"].reset()
+            self.set_parameters([Parameter(name="throttle_curve_choice", value=1)])
+            self.set_thrust_params.update_params("center_of_mass_increment", [0.0, 0.0, 0.0])
+            self.set_thrust_params.send_params()
 
 
 def main(args=None):
@@ -201,5 +267,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == "main":
     main(sys.argv)

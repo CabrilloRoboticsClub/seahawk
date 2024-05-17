@@ -49,12 +49,15 @@ class Thrust(Node):
         """Initialize this node"""
         super().__init__("thrust")
 
-        self.MAX_FWD_THRUST = 36.3826715 / 2 # N
-        self.MAX_REV_THRUST = -28.6354180 / 2 # N
+        self.MAX_FWD_THRUST = 36.3826715 * 2 # N
+        self.MAX_REV_THRUST = -28.6354180 * 2 # N
 
-        self.TOTAL_CURRENT_LIMIT = 70 /2 # A
-        self.ESC_CURRENT_LIMIT = 40 / 2 # A
+        self.TOTAL_CURRENT_LIMIT = 70 # A
+        self.ESC_CURRENT_LIMIT = 40 # A
 
+        # x 0.04m
+        # y 0.025m
+        # z -0.01m
         self.motor_positions = [ # [X, Y, Z] positions for each motors
             [ 0.200,  0.130,  0.004], # Motor 0
             [ 0.200, -0.130,  0.047], # Motor 1
@@ -65,24 +68,29 @@ class Thrust(Node):
             [-0.198,  0.156, -0.038], # Motor 6
             [-0.198, -0.156, -0.038]  # Motor 7
         ]
-
+        self.motor_positions = [(np.subtract(motor, [0.04, 0.025, -0.01]).tolist())
+                                for motor in self.motor_positions]
+        # (modified for bad props, hardware is stupid, the people not the concept)
+        # TODO: eventually remove negs
         self.motor_thrusts = [ # [X, Y, Z] components of thrust for each motor
-            [    0.0,     0.0, 1.0], # Motor 0
-            [    0.0,     0.0, 1.0], # Motor 1
-            [    0.0,     0.0, 1.0], # Motor 2
-            [    0.0,     0.0, 1.0], # Motor 3
-            [ 0.7071, -0.7071, 0.0], # Motor 4
-            [ 0.7071,  0.7071, 0.0], # Motor 5
-            [-0.7071, -0.7071, 0.0], # Motor 6
-            [-0.7071,  0.7071, 0.0]  # Motor 7
+            [    0.0,     0.0, -1.0],   # Motor 0
+            [    0.0,     0.0,  1.0],   # Motor 1 
+            [    0.0,     0.0,  1.0],   # Motor 2
+            [    0.0,     0.0, -1.0],   # Motor 3
+            [-0.7071,  0.7071,  0.0],   # Motor 4
+            [-0.7071, -0.7071,  0.0],   # Motor 5
+            [ 0.7071,  0.7071,  0.0],   # Motor 6
+            [ 0.7071, -0.7071,  0.0]    # Motor 7
         ]
 
-        self.declare_parameter("center_of_mass_offset", [0.0, 0.0, 0.0])
         self.declare_parameter("publishing_pwm", True)
 
+        self.center_of_mass = [0.0] * 3
+
+        self.declare_parameter("center_of_mass_increment", self.center_of_mass)
         self.add_on_set_parameters_callback(self.update_center_of_mass)
 
-        self.motor_config = self.generate_motor_config(self.get_parameter("center_of_mass_offset").value)
+        self.motor_config = self.generate_motor_config(self.center_of_mass)
         self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
 
         if self.get_parameter("publishing_pwm").value:
@@ -169,12 +177,21 @@ class Thrust(Node):
         Returns:
             SetParametersResult() which lets ROS2 know if the parameters were set correctly or not
         """
-        center_of_mass_offset = self.get_parameter("center_of_mass_offset").value
-        if len(center_of_mass_offset) != 3:
-            return SetParametersResult(successful=False)
-        self.motor_config = self.generate_motor_config(center_of_mass_offset)
-        self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
-        return SetParametersResult(successful=True)
+
+
+        # Where `center_of_mass_increment` is a param set by either `pilot_input` or `dash` 
+        for param in params:
+            if param.name == "center_of_mass_increment":
+                if len(value:=param.value.tolist()) == 3:
+                    if (value == [0.0] * 3):
+                        self.center_of_mass = value
+                    else:
+                        for i, inc in enumerate(value):
+                            self.center_of_mass[i] += inc
+                    self.motor_config = self.generate_motor_config(self.center_of_mass)
+                    self.inverse_config = np.linalg.pinv(self.motor_config, rcond=1e-15, hermitian=False)
+                    return SetParametersResult(successful=True)
+        return SetParametersResult(successful=False)
 
     def generate_motor_config(self, center_of_mass_offset):
         """
@@ -205,8 +222,7 @@ class Thrust(Node):
 
         Args:
             x: Thrust being produced in newtons.
-            a-f: Arbitrary parameters to map thrust to current, see generate_thrust_fit_params
-()
+            a-f: Arbitrary parameters to map thrust to current, see generate_thrust_fit_params()
 
         Returns:
             Current (estimated) to be drawn in amps.
