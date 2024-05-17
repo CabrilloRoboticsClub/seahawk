@@ -50,6 +50,9 @@ class BME280:
         msg.temperature = self.bme280.temperature
         msg.humidity = self.bme280.humidity
         msg.pressure = self.bme280.pressure
-        self.publisher.publish(msg)
+        try:
+            self.publisher.publish(msg)
+        except:  # TODO: Find the exact exception raised
+            self.node.get_logger().info("Warning: BME208 failed to publish")
 
 
