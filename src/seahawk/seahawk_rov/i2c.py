@@ -1,7 +1,7 @@
 """
-seahawk_rov/main.py
+i2c.py
 
-this is the main node that runs on the ROV
+Reads and publishes data from all sensors on the pi i2c bus.
 
 Copyright (C) 2022-2023 Cabrillo Robotics Club
 
@@ -60,13 +60,6 @@ class I2C(Node):
         self.bno085.pub_callback()
         self.bme280.pub_callback()
         self.pressure.pub_callback()
-
-    # def pressure_callback(self):
-    #     pressure_msg = PressureSensor()  # create a obj of type Pressure
-    #     pressure_msg.pressure = sensor.pressure(pascal)
-
-    #     pressure_msg.depth sensor.depth()
-    #     self.pressure_publisher_.publish(pressure_msg)  # publish depth_msg to depth_topic
 
 
 def main(args=None):
