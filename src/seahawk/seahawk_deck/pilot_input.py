@@ -116,7 +116,7 @@ class PilotInput(Node):
             "main_claw":        StickyButton(),     # x
             "claw_1":           StickyButton(),     # y
             "kill":             StickyButton(),     # window
-            # "":               StickyButton(),     # menu
+            "reverse":          StickyButton(),     # menu
         }
 
 
@@ -197,7 +197,7 @@ class PilotInput(Node):
             "pos_angular_x":    joy_msg.buttons[4], # left_bumper
             "neg_angular_x":    joy_msg.buttons[5], # right_bumper
             "kill":             joy_msg.buttons[6], # window
-            # "":               joy_msg.buttons[7], # menu
+            "reverse":          joy_msg.buttons[7], # menu
             "reset":            joy_msg.buttons[8], # xbox
         }
 
@@ -228,6 +228,12 @@ class PilotInput(Node):
             twist_msg.angular.x /= 2
             twist_msg.angular.y /= 2
             twist_msg.angular.z /= 2
+        
+        if reverse := self.buttons["reverse"].check_state(controller["reverse"]):
+            twist_msg.linear.x  *= -1
+            twist_msg.linear.y  *= -1
+            twist_msg.angular.x *= -1
+            twist_msg.angular.y *= -1
 
         # Publish twist message
         self.twist_pub.publish(twist_msg)
@@ -243,9 +249,10 @@ class PilotInput(Node):
 
         # Publish input states message for the dashboard
         input_states_msg = InputStates()
-        input_states_msg.bambi_mode = bambi_state
-        input_states_msg.kill = kill
-        input_states_msg.thrt_crv = self.key_input
+        input_states_msg.bambi_mode     = bambi_state
+        input_states_msg.kill           = kill
+        input_states_msg.reverse        = reverse
+        input_states_msg.thrt_crv       = self.key_input
         self.input_states_pub.publish(input_states_msg)
 
         # CoM shift: dpad up/down modifies linear CoM shift along orig CoM to claw
@@ -256,6 +263,7 @@ class PilotInput(Node):
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
             self.buttons["bambi_mode"].reset()
+            self.buttons["reverse"].reset()
             self.set_parameters([Parameter(name="throttle_curve_choice", value=1)])
             self.set_thrust_params.update_params("center_of_mass_increment", [0.0, 0.0, 0.0])
             self.set_thrust_params.send_params()
