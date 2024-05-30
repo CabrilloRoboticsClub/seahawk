@@ -59,7 +59,7 @@ class I2C(Node):
     def pub_callback(self):
         self.bno085.pub_callback()
         self.bme280.pub_callback()
-        self.pressure.pub_callback()
+        # self.pressure.pub_callback()
 
 
 def main(args=None):
