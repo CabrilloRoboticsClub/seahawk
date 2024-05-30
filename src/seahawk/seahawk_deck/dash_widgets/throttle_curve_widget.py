@@ -52,7 +52,7 @@ class ThrtCrvWidget(qtw.QWidget):
         # Apply css styling
         self.set_colors(self.colors)
 
-    def update(self, thrt_crv: str):
+    def update(self, thrt_crv: int):
         """
         Update graphical representation of the throttle curves
 
@@ -61,13 +61,12 @@ class ThrtCrvWidget(qtw.QWidget):
         """
         if self.cur_crv  != thrt_crv: # Only update if it is a new curve
             # Grab the specific throttle curve img needed to be displayed on widget
-            match thrt_crv:
-                case 1:
-                    img = self.colors["LINEAR_CURVE"]
-                case 2:
-                    img = self.colors["CUBIC_CURVE"]
-                case 3:
-                    img = self.colors["FIFTH_DEG_CURVE"]
+            if thrt_crv == 1:
+                img = self.colors["LINEAR_CURVE"]
+            elif thrt_crv == 2:
+                img = self.colors["CUBIC_CURVE"]
+            else:
+                img = self.colors["FIFTH_DEG_CURVE"]
             # Update curve image
             self.label.setPixmap(qtg.QPixmap(img))
             self.cur_crv = thrt_crv
