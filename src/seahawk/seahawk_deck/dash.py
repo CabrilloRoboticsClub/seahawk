@@ -526,7 +526,7 @@ class TabWidget(qtw.QWidget):
         self.leak = NumericDataWidget(tab, "Leak Status", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.humidity = NumericDataWidget(tab, "Humidity", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.barometric_pressure = NumericDataWidget(tab, "Barometric Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.ambient_temperature = NumericDataWidget(tab, "Ambient Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.ambient_temperature = NumericDataWidget(tab, "Ambient Temp", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         
         info_layout.addWidget(self.leak)
         info_layout.addWidget(self.humidity)
