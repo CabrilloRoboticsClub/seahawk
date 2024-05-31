@@ -49,7 +49,6 @@ class Debug(Node):
         }
 
         # Setup for debug information
-        self.time = time()
         net = psutil.net_io_counters()
         self.sent = net.bytes_sent
         self.recv = net.bytes_recv
@@ -71,16 +70,16 @@ class Debug(Node):
         curr_sent = net.bytes_sent
         curr_recv = net.bytes_recv
 
-        sent = curr_sent - self.sent
-        recv = curr_recv - self.recv
+        sent = bytes2human(curr_sent - self.sent)
+        recv = bytes2human(curr_recv - self.recv)
 
         self.sent = curr_sent
         self.recv = curr_recv
 
-        msg.net_sent = float(sent)
-        msg.net_recv = float(recv)
+        msg.net_sent = sent
+        msg.net_recv = recv
 
-        msg.time = time() - self.time
+        msg.time = time()
 
         self._publisher.publish(msg)
 
