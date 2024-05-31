@@ -13,7 +13,6 @@ from rclpy.publisher import Publisher
 from std_msgs.msg import String
 from rcl_interfaces.msg import ParameterEvent
 from sensor_msgs.msg import Image
-from sensor_msgs.msg import Joy
 
 from seahawk_deck.dash_styling.color_palette import DARK_MODE, LIGHT_MODE
 from seahawk_deck.dash_widgets.countdown_widget import CountdownWidget
@@ -570,10 +569,8 @@ class Dash(Node):
         """
         super().__init__("dash")
 
-        self.create_subscription(InputStates, "input_states", ros_qt_bridge.callback_input_states, 10)
-        # self.create_subscription(DebugInfo, "debug_info", bridge.callback_debug, 10)
-        
-        self.create_subscription(Joy, "joy", ros_qt_bridge.callback_debug, 10)
+        self.create_subscription(InputStates, "input_states", ros_qt_bridge.callback_input_states, 10)        
+        self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
