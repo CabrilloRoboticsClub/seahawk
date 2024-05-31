@@ -34,7 +34,7 @@ class BME280:
     Class which reads and publishes data from the Bme280.
     """
 
-    def __init__(self, node, i2c, i2c_addr=0x76):
+    def __init__(self, node, i2c, i2c_addr=0x77):
         """
         Initialize `BME280` object.
         """
