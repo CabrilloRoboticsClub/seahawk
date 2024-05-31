@@ -525,9 +525,9 @@ class TabWidget(qtw.QWidget):
         info_layout.addWidget(self.barometric_pressure)
         info_layout.addWidget(self.ambient_temperature)
 
-        self.temp_graph = DynamicPlotWidget(tab, "CPU Temperature vs Time", "CPU Temperature", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors, y_range = (-1, 1))
-        self.cpu_usage_graph = DynamicPlotWidget(tab, "CPU Usage vs Time", "CPU Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
-        self.mem_usage_graph = DynamicPlotWidget(tab, "Memory Usage vs Time", "Memory Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.temp_graph = DynamicPlotWidget(tab, "CPU Temperature", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors, y_range = (-1, 1))
+        self.cpu_usage_graph = DynamicPlotWidget(tab, "CPU Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.mem_usage_graph = DynamicPlotWidget(tab, "Memory Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
         graph_layout.addWidget(self.temp_graph)
         graph_layout.addWidget(self.cpu_usage_graph)
         graph_layout.addWidget(self.mem_usage_graph)

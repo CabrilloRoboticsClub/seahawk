@@ -13,7 +13,7 @@ class DynamicPlotWidget(qtw.QWidget):
     plots numeric data on a graph, updating with the `update_plot()` function
     """
 
-    def __init__(self, parent: qtw.QWidget, title: str, x_label: str, y_label, style_sheet_file: str, colors: dict, x_range: tuple[float, float] = None, y_range: tuple[float, float] = None):
+    def __init__(self, parent: qtw.QWidget, x_label: str, y_label, style_sheet_file: str, colors: dict, x_range: tuple[float, float] = None, y_range: tuple[float, float] = None):
         """
         Initialize dynamic plot widget
         
@@ -23,7 +23,6 @@ class DynamicPlotWidget(qtw.QWidget):
         """
         super().__init__(parent)
        
-        self.colors = colors
         with open(style_sheet_file) as style_sheet:
             self.style_sheet = style_sheet.read()
 
@@ -41,13 +40,16 @@ class DynamicPlotWidget(qtw.QWidget):
             self.plot.setXRange(*x_range)
         if y_range is not None:
             self.plot.setYRange(*y_range)
+        
+        self.x_label = x_label
+        self.y_label = y_label
 
-        self.plot.setTitle(title, color=self.colors["TEXT"], size="11pt")
+        self.plot.setTitle(f"{self.y_label} vs {self.x_label}", color=colors["TEXT"], size="11pt")
         self.plot.setBackground((0, 0, 0, 0))
-        styles = {"color": self.colors["TEXT"], "font-size": "8pt"}
-        self.plot.setLabel("left", x_label, **styles)
-        self.plot.setLabel("bottom", y_label, **styles)
-        self.pen = pg.mkPen(color=self.colors["ACCENT"], width=2)
+        styles = {"color": colors["TEXT"], "font-size": "8pt"}
+        self.plot.setLabel("left", self.x_label, **styles)
+        self.plot.setLabel("bottom",self.y_label, **styles)
+        self.pen = pg.mkPen(color=colors["ACCENT"], width=2)
 
         self.line = self.plot.plot(self.x, self.y, pen=self.pen)
         layout_inner.addWidget(self.plot)
@@ -78,3 +80,8 @@ class DynamicPlotWidget(qtw.QWidget):
             new_colors: Hex codes to color widget with.
         """
         self.setStyleSheet(self.style_sheet.format(**new_colors))
+        self.plot.setTitle(f"{self.y_label} vs {self.x_label}", color=new_colors["TEXT"], size="11pt")
+        styles = {"color": new_colors["TEXT"], "font-size": "8pt"}
+        self.plot.setLabel("left", self.x_label, **styles)
+        self.plot.setLabel("bottom",self.y_label, **styles)
+        self.plot.setBackground((0, 0, 0, 0))
