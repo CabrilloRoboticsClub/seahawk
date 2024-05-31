@@ -46,13 +46,16 @@ class BME280:
         """
         Collects and publishes sensor data from the Bme280 to the ROS network over the `/bme280` topic.
         """
-        msg = Bme280()
-        msg.temperature = self.bme280.temperature
-        msg.humidity = self.bme280.humidity
-        msg.pressure = self.bme280.pressure
         try:
+            msg = Bme280()
+            msg.temperature = self.bme280.temperature
+            msg.humidity = self.bme280.humidity
+            msg.pressure = self.bme280.pressure
             self.publisher.publish(msg)
-        except:  # TODO: Find the exact exception raised
-            self.node.get_logger().info("Warning: BME208 failed to publish")
+        except OSError as e:
+            self.node.get_logger().info("Warning: BME280 failed to publish (OSError)\n", e)
+        except Exception as e:
+            self.node.get_logger().info("Warning: BME280 failed to publish (other)\n", e)
+
 
 

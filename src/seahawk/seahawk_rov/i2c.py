@@ -54,12 +54,12 @@ class I2C(Node):
         self.bme280 = BME280(self, i2c)  # Pressure, Temperature, Humidity
         self.pressure = Pressure(self, i2c)
 
-        self.create_timer(0.5, self.pub_callback)
+        self.create_timer(0.1, self.pub_callback)
     
     def pub_callback(self):
         self.bno085.pub_callback()
         self.bme280.pub_callback()
-        self.pressure.pub_callback()
+        # self.pressure.pub_callback()
 
 
 def main(args=None):

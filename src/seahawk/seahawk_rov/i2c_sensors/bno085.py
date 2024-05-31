@@ -51,23 +51,24 @@ class BNO085:
         """
         Collects and publishes sensor data from the IMU to the ROS network over the `/bno085` topic.
         """
-        msg = Imu()
-        msg.header.frame_id = "bno085"
-
-        # IMU X right, Y forward, Z up
-        # ROS Y left, X forward, Z up
-        msg.orientation.x         = self.bno085.geomagnetic_quaternion[1]
-        msg.orientation.y         = -self.bno085.geomagnetic_quaternion[0]
-        msg.orientation.z         = self.bno085.geomagnetic_quaternion[2]
-        msg.orientation.w         = self.bno085.geomagnetic_quaternion[3]
-        msg.angular_velocity.x    = self.bno085.gyro[1]
-        msg.angular_velocity.y    = -self.bno085.gyro[0]
-        msg.angular_velocity.z    = self.bno085.gyro[2]
-        msg.linear_acceleration.x = self.bno085.linear_acceleration[1]
-        msg.linear_acceleration.y = -self.bno085.linear_acceleration[0]
-        msg.linear_acceleration.z = self.bno085.linear_acceleration[2]
 
         try:
+            msg = Imu()
+            msg.header.frame_id = "bno085"
+            # IMU X right, Y forward, Z up
+            # ROS Y left, X forward, Z up
+            msg.orientation.x         = self.bno085.geomagnetic_quaternion[1]
+            msg.orientation.y         = -self.bno085.geomagnetic_quaternion[0]
+            msg.orientation.z         = self.bno085.geomagnetic_quaternion[2]
+            msg.orientation.w         = self.bno085.geomagnetic_quaternion[3]
+            msg.angular_velocity.x    = self.bno085.gyro[1]
+            msg.angular_velocity.y    = -self.bno085.gyro[0]
+            msg.angular_velocity.z    = self.bno085.gyro[2]
+            msg.linear_acceleration.x = self.bno085.linear_acceleration[1]
+            msg.linear_acceleration.y = -self.bno085.linear_acceleration[0]
+            msg.linear_acceleration.z = self.bno085.linear_acceleration[2]
             self.publisher.publish(msg)
-        except:  # TODO: Find the exact exception raised
-            self.node.get_logger().info("Warning: IMU failed to publish")
+        except OSError as e:
+            self.node.get_logger().info("Warning: IMU failed to publish (OSError)\n", e)
+        except Exception as e:
+            self.node.get_logger().info("Warning: IMU failed to publish (other)\n", e)
