@@ -47,8 +47,8 @@ class DynamicPlotWidget(qtw.QWidget):
         self.plot.setTitle(f"{self.y_label} vs {self.x_label}", color=colors["TEXT"], size="11pt")
         self.plot.setBackground((0, 0, 0, 0))
         styles = {"color": colors["TEXT"], "font-size": "8pt"}
-        self.plot.setLabel("left", self.x_label, **styles)
-        self.plot.setLabel("bottom",self.y_label, **styles)
+        self.plot.setLabel("left", self.y_label, **styles)
+        self.plot.setLabel("bottom",self.x_label, **styles)
         self.pen = pg.mkPen(color=colors["ACCENT"], width=2)
 
         self.line = self.plot.plot(self.x, self.y, pen=self.pen)
@@ -82,6 +82,6 @@ class DynamicPlotWidget(qtw.QWidget):
         self.setStyleSheet(self.style_sheet.format(**new_colors))
         self.plot.setTitle(f"{self.y_label} vs {self.x_label}", color=new_colors["TEXT"], size="11pt")
         styles = {"color": new_colors["TEXT"], "font-size": "8pt"}
-        self.plot.setLabel("left", self.x_label, **styles)
-        self.plot.setLabel("bottom",self.y_label, **styles)
+        self.plot.setLabel("left", self.y_label, **styles)
+        self.plot.setLabel("bottom",self.x_label, **styles)
         self.plot.setBackground((0, 0, 0, 0))
