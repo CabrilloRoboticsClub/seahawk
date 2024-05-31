@@ -71,14 +71,14 @@ class Debug(Node):
         curr_sent = net.bytes_sent
         curr_recv = net.bytes_recv
 
-        sent = bytes2human(curr_sent - self.sent)
-        recv = bytes2human(curr_recv - self.recv)
+        sent = curr_sent - self.sent
+        recv = curr_recv - self.recv
 
         self.sent = curr_sent
         self.recv = curr_recv
 
-        msg.net_sent = sent
-        msg.net_recv = recv
+        msg.net_sent = float(sent)
+        msg.net_recv = float(recv)
 
         msg.time = time() - self.time
 
