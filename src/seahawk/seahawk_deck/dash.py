@@ -13,6 +13,7 @@ from rclpy.publisher import Publisher
 from std_msgs.msg import String
 from rcl_interfaces.msg import ParameterEvent
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import Joy
 
 from seahawk_deck.dash_styling.color_palette import DARK_MODE, LIGHT_MODE
 from seahawk_deck.dash_widgets.countdown_widget import CountdownWidget
@@ -23,7 +24,8 @@ from seahawk_deck.dash_widgets.turn_bank_indicator_widget import TurnBankIndicat
 from seahawk_deck.dash_widgets.term_widget import TermWidget
 from seahawk_deck.set_remote_params import SetRemoteParams
 from seahawk_deck.dash_widgets.tri_numeric_data_widget import TriNumericDataWidget
-from seahawk_msgs.msg import InputStates
+from seahawk_deck.dash_widgets.dynamic_plot_widget import DynamicPlotWidget
+from seahawk_msgs.msg import InputStates, DebugInfo
 
 PATH = path.dirname(__file__)
 
@@ -42,6 +44,7 @@ class RosQtBridge(qtw.QWidget):
     new_cam_claw_msg_sgl = qtc.pyqtSignal()
     new_cam_top_msg_sgl = qtc.pyqtSignal()
     new_com_param_sgl = qtc.pyqtSignal()
+    new_debug_sgl = qtc.pyqtSignal()
     new_publisher_sgl = qtc.pyqtSignal()
     new_set_params_sgl = qtc.pyqtSignal()
 
@@ -56,6 +59,7 @@ class RosQtBridge(qtw.QWidget):
         self.cam_claw_msg = None
         self.cam_top_msg = None
         self.com = [0.0] * 3
+        self.debug_msg = None
         self.keystroke_pub = None
         self.pilot_input_set_params = None
 
@@ -107,7 +111,7 @@ class RosQtBridge(qtw.QWidget):
         self.cam_top_msg = msg
         self.new_cam_top_msg_sgl.emit()
     
-    def param_event_callback(self, msg: ParameterEvent):
+    def callback_param_event(self, msg: ParameterEvent):
         """
         Called for each time a parameter is modified on the ROS network.
 
@@ -123,6 +127,18 @@ class RosQtBridge(qtw.QWidget):
                         for i, val in enumerate(param.value.double_array_value):
                             self.com[i] += val
                     self.new_com_param_sgl.emit()
+    
+    def callback_debug(self, msg: DebugInfo):
+        """
+        Called for each time a message is published to the `debug_info` topic.
+        Collects the contents of the message sent and emits a `new_debug_sgl`
+        signal which is received by Qt.
+
+        Args:
+            msg: Message of type `DebugInfo` from the `debug_info` topic
+        """
+        self.debug_msg = msg
+        self.new_debug_sgl.emit()
 
     def add_publisher(self, pub: Publisher):
         """
@@ -273,6 +289,9 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.turn_bank_indicator_widget.set_colors(self.colors)
         self.tab_widget.countdown_widget.set_colors(self.colors)
         self.tab_widget.term_widget.set_colors(self.colors)
+        self.tab_widget.temp_graph.set_colors(self.colors)
+        self.tab_widget.cpu_usage_graph.set_colors(self.colors)
+        self.tab_widget.mem_usage_graph.set_colors(self.colors)
         
 
 class TabWidget(qtw.QWidget):
@@ -307,6 +326,7 @@ class TabWidget(qtw.QWidget):
         self.ros_qt_bridge.new_cam_front_msg_sgl.connect(self.update_cam_front)
         self.ros_qt_bridge.new_cam_claw_msg_sgl.connect(self.update_cam_claw)
         self.ros_qt_bridge.new_cam_top_msg_sgl.connect(self.update_cam_top)
+        self.ros_qt_bridge.new_debug_sgl.connect(self.update_debug)
     
         # Define layout of tabs
         layout = qtw.QVBoxLayout(self)
@@ -315,6 +335,9 @@ class TabWidget(qtw.QWidget):
         # Initialize tabs
         tabs = qtw.QTabWidget()
         tabs.currentChanged.connect(self.tab_changed)
+        
+        # Start debug as not open
+        self.debug_open = False
 
         # Create a dict in which the key is the provided name of the tab, and the value is a qtw.QWidget() object
         tab_names = ["Pilot", "Co-Pilot", "Debug", "Control Mapping"]
@@ -426,6 +449,9 @@ class TabWidget(qtw.QWidget):
             if i == index:
                 tab.setFocus()
 
+        # Set if the tab is open to debug
+        self.debug_open = index == 2
+
     @staticmethod
     def update_cam_img(data: Image, video_frame: VideoFrame):
         """
@@ -486,29 +512,46 @@ class TabWidget(qtw.QWidget):
     def create_debug_tab(self, tab: qtw.QWidget):
         # Setup layouts
         debug_layout = qtw.QHBoxLayout(tab)
-        graph_layout = qtw.QGridLayout()
+        debug_layout.setSpacing(0)
+        
+        info_layout = qtw.QVBoxLayout()
+        graph_layout = qtw.QVBoxLayout()
         term_layout = qtw.QVBoxLayout()
 
-        temp_graph_1 = qtw.QFrame()
-        temp_graph_2 = qtw.QFrame()
-        temp_graph_3 = qtw.QFrame()
-        temp_graph_4 = qtw.QFrame()
+        self.humidity = NumericDataWidget(tab, "Humidity", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.barometric_pressure = NumericDataWidget(tab, "Barometric Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.ambient_temperature = NumericDataWidget(tab, "Ambient Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        info_layout.addWidget(self.humidity)
+        info_layout.addWidget(self.barometric_pressure)
+        info_layout.addWidget(self.ambient_temperature)
 
-        # (0, 0)    (0, 1)
-        # (1, 0)    (1, 1)
-        graph_layout.addWidget(temp_graph_1, 0, 0)
-        graph_layout.addWidget(temp_graph_2, 0, 1)
-        graph_layout.addWidget(temp_graph_3, 1, 0)
-        graph_layout.addWidget(temp_graph_4, 1, 1)
-
+        self.temp_graph = DynamicPlotWidget(tab, "CPU Temperature vs Time", "CPU Temperature", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors, y_range = (-1, 1))
+        self.cpu_usage_graph = DynamicPlotWidget(tab, "CPU Usage vs Time", "CPU Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.mem_usage_graph = DynamicPlotWidget(tab, "Memory Usage vs Time", "Memory Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        graph_layout.addWidget(self.temp_graph)
+        graph_layout.addWidget(self.cpu_usage_graph)
+        graph_layout.addWidget(self.mem_usage_graph)
 
         self.term_widget = TermWidget(tab, PATH + "/dash_styling/term_widget.txt", self.colors)
-
         term_layout.addWidget(self.term_widget)
 
-        debug_layout.addLayout(graph_layout, stretch=7)
+        debug_layout.addLayout(info_layout, stretch=1)
+        debug_layout.addLayout(graph_layout, stretch=6)
         debug_layout.addLayout(term_layout, stretch=3)
 
+    @qtc.pyqtSlot()
+    def update_debug(self):
+        if self.debug_open:
+            pass
+            # TODO: Do stuff (it would be cool)
+            # This is connected and ready to go
+
+    @qtc.pyqtSlot()
+    def update_bme280(self):
+        if self.debug_open:
+            pass
+            # TODO: Do stuff (it would be cool)
+            # This is not connected
 
 class Dash(Node):
     """
@@ -526,12 +569,12 @@ class Dash(Node):
 
         self.create_subscription(InputStates, "input_states", ros_qt_bridge.callback_input_states, 10)
         # self.create_subscription(DebugInfo, "debug_info", bridge.callback_debug, 10)
-
-        # Camera subscriptions
+        
+        self.create_subscription(Joy, "joy", ros_qt_bridge.callback_debug, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
-        self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.param_event_callback, 10)
+        self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.callback_param_event, 10)
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))
 
