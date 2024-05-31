@@ -23,13 +23,15 @@ Cabrillo Robotics Club
 cabrillorobotics@gmail.com
 """
 
+#  Pressure Sensor: https://bluerobotics.com/store/sensors-cameras/sensors/bar02-sensor-r1-rp/
+
 from seahawk_msgs.msg import PressureSensor
 import ms5837
-from ms5837 import MS5837_02BA(bus=1)
+from ms5837 import MS5837_30BA
 
 class Pressure:
 
-    def __init__(self, node, i2c, i2c_addr=0x76)  # add the i2c address later lol
+    def __init__(self, node, i2c, i2c_addr=0x76)  # This is the correct address i think
         self.node = node
         self.pressure_publisher_ = self.node.create_publisher(PressureSensor, 'pressure_topic', 10)  # create a publisher that publishes messages of type String to pressure_topic
 
