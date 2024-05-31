@@ -291,9 +291,11 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.humidity.set_colors(self.colors)
         self.tab_widget.barometric_pressure.set_colors(self.colors)
         self.tab_widget.ambient_temperature.set_colors(self.colors)
-        self.tab_widget.temp_graph.set_colors(self.colors)
-        self.tab_widget.cpu_usage_graph.set_colors(self.colors)
-        self.tab_widget.mem_usage_graph.set_colors(self.colors)
+        self.tab_widget.cpu_usage.set_colors(self.colors)
+        self.tab_widget.memory_usage.set_colors(self.colors)
+        self.tab_widget.cpu_temperature.set_colors(self.colors)
+        self.tab_widget.net_sent.set_colors(self.colors)
+        self.tab_widget.net_recv.set_colors(self.colors)
         
 
 class TabWidget(qtw.QWidget):
@@ -517,28 +519,41 @@ class TabWidget(qtw.QWidget):
         debug_layout.setSpacing(0)
         
         info_layout = qtw.QVBoxLayout()
-        graph_layout = qtw.QVBoxLayout()
+        graph_layout_1 = qtw.QVBoxLayout()
+        graph_layout_2 = qtw.QVBoxLayout()
         term_layout = qtw.QVBoxLayout()
 
+        self.leak = NumericDataWidget(tab, "Leak Status", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.humidity = NumericDataWidget(tab, "Humidity", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.barometric_pressure = NumericDataWidget(tab, "Barometric Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.ambient_temperature = NumericDataWidget(tab, "Ambient Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        
+        info_layout.addWidget(self.leak)
         info_layout.addWidget(self.humidity)
         info_layout.addWidget(self.barometric_pressure)
         info_layout.addWidget(self.ambient_temperature)
 
-        self.temp_graph = DynamicPlotWidget(tab, "CPU Temperature", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors, y_range = (-1, 1))
-        self.cpu_usage_graph = DynamicPlotWidget(tab, "CPU Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
-        self.mem_usage_graph = DynamicPlotWidget(tab, "Memory Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
-        graph_layout.addWidget(self.temp_graph)
-        graph_layout.addWidget(self.cpu_usage_graph)
-        graph_layout.addWidget(self.mem_usage_graph)
+        
+        self.cpu_usage = DynamicPlotWidget(tab, "CPU Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.memory_usage = DynamicPlotWidget(tab, "Memory Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.cpu_temperature = DynamicPlotWidget(tab, "CPU Temperature", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors, y_range=(-1, 1))
+        self.net_sent = DynamicPlotWidget(tab, "Net Bytes Sent", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.net_recv = DynamicPlotWidget(tab, "Net Bytes Received", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+
+        temp = qtw.QFrame()
+        graph_layout_1.addWidget(temp, stretch=3)
+        graph_layout_1.addWidget(self.cpu_usage, stretch=3)
+        graph_layout_1.addWidget(self.memory_usage, stretch=3)
+        graph_layout_2.addWidget(self.cpu_temperature)
+        graph_layout_2.addWidget(self.net_sent)
+        graph_layout_2.addWidget(self.net_recv)
 
         self.term_widget = TermWidget(tab, PATH + "/dash_styling/term_widget.txt", self.colors)
         term_layout.addWidget(self.term_widget)
 
         debug_layout.addLayout(info_layout, stretch=1)
-        debug_layout.addLayout(graph_layout, stretch=6)
+        debug_layout.addLayout(graph_layout_1, stretch=3)
+        debug_layout.addLayout(graph_layout_2, stretch=3)
         debug_layout.addLayout(term_layout, stretch=3)
 
     @qtc.pyqtSlot()
@@ -570,7 +585,7 @@ class Dash(Node):
         super().__init__("dash")
 
         self.create_subscription(InputStates, "input_states", ros_qt_bridge.callback_input_states, 10)        
-        self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
+        # self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
