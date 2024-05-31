@@ -26,7 +26,7 @@ setup(
         'console_scripts': [
             "debug=seahawk_rov.debug:main",
             "claws=seahawk_rov.claws:main",
-            "spinny_thing=seahawk_rov.spinny_thing:main",
+            "i2c=seahawk_rov.i2c:main",
             "thrust=seahawk_deck.thrust:main",
             "pilot_input=seahawk_deck.pilot_input:main",
             "rviz_markers=seahawk_deck.rviz_markers:main",
