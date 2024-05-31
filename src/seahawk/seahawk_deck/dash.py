@@ -535,9 +535,9 @@ class TabWidget(qtw.QWidget):
         
         self.cpu_usage = DynamicPlotWidget(tab, "Time", "CPU Usage", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
         self.memory_usage = DynamicPlotWidget(tab, "Time", "Memory Usage", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
-        self.cpu_temperature = DynamicPlotWidget(tab, "Time", "CPU Temperature", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors, y_range=(-1, 1))
-        self.net_sent = DynamicPlotWidget(tab, "Time", "Net Bytes Sent", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
-        self.net_recv = DynamicPlotWidget(tab, "Time", "Net Bytes Received", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.cpu_temperature = DynamicPlotWidget(tab, "Time", "CPU Temperature", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.net_sent = DynamicPlotWidget(tab, "Time", "Net Megabytes Sent", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.net_recv = DynamicPlotWidget(tab, "Time", "Net Kilobytes Received", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
 
         temp = qtw.QFrame()
         graph_layout_1.addWidget(temp, stretch=3)
@@ -558,9 +558,12 @@ class TabWidget(qtw.QWidget):
     @qtc.pyqtSlot()
     def update_debug(self):
         if self.debug_open:
-            pass
-            # TODO: Do stuff (it would be cool)
-            # This is connected and ready to go
+            msg = self.ros_qt_bridge.debug_msg
+            self.cpu_usage.update(msg.time, msg.cpu_usage)
+            self.memory_usage.update(msg.time, msg.memory_usage)
+            self.cpu_temperature.update(msg.time, msg.cpu_temperature)
+            self.net_sent.update(msg.time, msg.net_sent / 1000000)  # Convert to megabyte
+            self.net_recv.update(msg.time, msg.net_recv / 1000)     # Convert to kilobyte
 
     @qtc.pyqtSlot()
     def update_bme280(self):
@@ -584,7 +587,7 @@ class Dash(Node):
         super().__init__("dash")
 
         self.create_subscription(InputStates, "input_states", ros_qt_bridge.callback_input_states, 10)        
-        # self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
+        self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
