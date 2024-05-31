@@ -532,13 +532,12 @@ class TabWidget(qtw.QWidget):
         info_layout.addWidget(self.humidity)
         info_layout.addWidget(self.barometric_pressure)
         info_layout.addWidget(self.ambient_temperature)
-
         
-        self.cpu_usage = DynamicPlotWidget(tab, "CPU Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
-        self.memory_usage = DynamicPlotWidget(tab, "Memory Usage", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
-        self.cpu_temperature = DynamicPlotWidget(tab, "CPU Temperature", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors, y_range=(-1, 1))
-        self.net_sent = DynamicPlotWidget(tab, "Net Bytes Sent", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
-        self.net_recv = DynamicPlotWidget(tab, "Net Bytes Received", "Time", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.cpu_usage = DynamicPlotWidget(tab, "Time", "CPU Usage", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.memory_usage = DynamicPlotWidget(tab, "Time", "Memory Usage", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.cpu_temperature = DynamicPlotWidget(tab, "Time", "CPU Temperature", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors, y_range=(-1, 1))
+        self.net_sent = DynamicPlotWidget(tab, "Time", "Net Bytes Sent", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
+        self.net_recv = DynamicPlotWidget(tab, "Time", "Net Bytes Received", PATH + "/dash_styling/dynamic_plot_widget.txt", self.colors)
 
         temp = qtw.QFrame()
         graph_layout_1.addWidget(temp, stretch=3)
