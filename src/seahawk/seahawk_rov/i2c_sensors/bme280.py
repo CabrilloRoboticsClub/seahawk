@@ -52,10 +52,10 @@ class BME280:
             msg.humidity = self.bme280.humidity
             msg.pressure = self.bme280.pressure
             self.publisher.publish(msg)
-        except OSError:
-            self.node.get_logger().info("Warning: BME208 failed to publish (OSError)")
-        except:
-            self.node.get_logger().info("Warning: BME208 failed to publish (other)")
+        except OSError as e:
+            self.node.get_logger().info("Warning: BME280 failed to publish (OSError)\n", e)
+        except Exception as e:
+            self.node.get_logger().info("Warning: BME280 failed to publish (other)\n", e)
 
 
 

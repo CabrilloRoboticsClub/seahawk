@@ -68,7 +68,7 @@ class BNO085:
             msg.linear_acceleration.y = -self.bno085.linear_acceleration[0]
             msg.linear_acceleration.z = self.bno085.linear_acceleration[2]
             self.publisher.publish(msg)
-        except OSError:
-            self.node.get_logger().info("Warning: IMU failed to publish (OSError)")
-        except:
-            self.node.get_logger().info("Warning: IMU failed to publish (other)")
+        except OSError as e:
+            self.node.get_logger().info("Warning: IMU failed to publish (OSError)\n", e)
+        except Exception as e:
+            self.node.get_logger().info("Warning: IMU failed to publish (other)\n", e)
