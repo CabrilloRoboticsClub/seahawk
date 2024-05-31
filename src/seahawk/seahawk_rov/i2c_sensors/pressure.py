@@ -31,23 +31,14 @@ from ms5837 import MS5837_30BA
 
 class Pressure:
 
-    def __init__(self, node, i2c, i2c_addr=0x76)  # This is the correct address i think
+    def __init__(self, node, i2c, i2c_addr=0x76):  # This is the correct address i think
         self.node = node
-        self.pressure_publisher_ = self.node.create_publisher(PressureSensor, 'pressure_topic', 10)  # create a publisher that publishes messages of type String to pressure_topic
+        self.pressure_publisher = self.node.create_publisher(PressureSensor, 'pressure_topic', 10)  # create a publisher that publishes messages of type String to pressure_topic
 
         self.sensor = ms5837.MS5837(model=ms5837.MS5837_MODEL_30BA, i2c_bus=i2c) # Specify model and bus
 
         self.sensor.init()  # initialize the sensor
-
-        if not self.sensor.init():
-            print("SENSOR READ FAILED.")
-            exit(1)
-
-        self.sensor.read(ms5837.OSR_256)  # Read the sensor and update the pressure and temperature.
-
-        if not self.sensor.read():
-            print("SENSOR READ FAILED.")
-            exit(1)
+        self.sensor.read(ms5837.OSR_256)  # Read the sensor and update the pressure and temperature.)
         
         water_density = ms5837.DENSITY_FRESHWATER  # set value for the density of fresh water
         self.sensor.setFluidDensity(water_density)  # Set fluid density 997 kg/m^3
@@ -55,6 +46,11 @@ class Pressure:
 
     def pressure_callback(self):
         pressure_msg = PressureSensor()  # create a obj of type Pressure
-        pressure_msg.pressure = self.sensor.pressure(self.pascal)
-        pressure_msg.depth = self.sensor.depth()
-        self.pressure_publisher_.publish(pressure_msg)  # publish depth_msg to depth_topic
+
+        if self.sensor.read():
+            pressure_msg = PressureSensor()  # create a obj of type Pressure
+            pressure_msg.pressure = self.sensor.pressure(self.pascal)
+            pressure_msg.depth = self.sensor.depth()
+            self.pressure_publisher.publish(pressure_msg)  # publish depth_msg to depth_topic
+        else:
+            self.node.get_logger().info("Warning: ms5837 failed to publish (OSError)\n")
