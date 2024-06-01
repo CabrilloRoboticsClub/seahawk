@@ -26,8 +26,8 @@ cabrillorobotics@gmail.com
 #  Pressure Sensor: https://bluerobotics.com/store/sensors-cameras/sensors/bar02-sensor-r1-rp/
 
 from seahawk_msgs.msg import PressureSensor
-import ms5837
-from ms5837 import MS5837_30BA
+from . import ms5837
+# from ms5837.ms5837 import MS5837_30BA
 
 class Pressure:
 
