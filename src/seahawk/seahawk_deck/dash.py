@@ -23,6 +23,7 @@ from seahawk_deck.dash_widgets.turn_bank_indicator_widget import TurnBankIndicat
 from seahawk_deck.dash_widgets.term_widget import TermWidget
 from seahawk_deck.set_remote_params import SetRemoteParams
 from seahawk_deck.dash_widgets.tri_numeric_data_widget import TriNumericDataWidget
+from seahawk_deck.dash_widgets.imu_widget import IMU_Widget
 from seahawk_msgs.msg import InputStates
 
 PATH = path.dirname(__file__)
@@ -378,6 +379,7 @@ class TabWidget(qtw.QWidget):
         self.temp_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.depth_widget = NumericDataWidget(tab, "Depth", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.countdown_widget = CountdownWidget(tab, PATH + "/dash_styling/countdown_widget.txt", self.colors, minutes=15, seconds=0)
+        self.imu_widget = IMU_Widget(tab, self.colors)
 
         # Add widgets to side vertical layout
         # Stretch modifies the ratios of the widgets (must add up to 100)
@@ -409,6 +411,7 @@ class TabWidget(qtw.QWidget):
         cam_layout.addWidget(self.cam_claw.label, 0, 1)
         cam_layout.addWidget(self.cam_top.label, 1, 0)
         cam_layout.addWidget(self.demo_map, 1, 1)
+        cam_layout.addWidget(self.imu_widget, 1, 1)  # Massimo: I added this here for temp testing
 
         home_window_layout.addLayout(vert_widgets_layout, stretch=1)
         home_window_layout.addLayout(cam_layout, stretch=9)
