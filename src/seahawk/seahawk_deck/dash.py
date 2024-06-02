@@ -572,13 +572,21 @@ class TabWidget(qtw.QWidget):
 
     @qtc.pyqtSlot()
     def update_debug(self):
+        msg = self.ros_qt_bridge.debug_msg
+        # Update display if the tab is open
         if self.debug_open:
-            msg = self.ros_qt_bridge.debug_msg
             self.cpu_usage.update(msg.time, msg.cpu_usage)
             self.memory_usage.update(msg.time, msg.memory_usage)
             self.cpu_temperature.update(msg.time, msg.cpu_temperature)
             self.net_sent.update(msg.time, msg.net_sent / 1000000)  # Convert bytes to megabyte
             self.net_recv.update(msg.time, msg.net_recv / 1000)     # Convert bytes to kilobyte
+        # If the tab is not open, store the data
+        else:
+            self.cpu_usage.append(msg.time, msg.cpu_usage)
+            self.memory_usage.append(msg.time, msg.memory_usage)
+            self.cpu_temperature.append(msg.time, msg.cpu_temperature)
+            self.net_sent.append(msg.time, msg.net_sent / 1000000)  # Convert bytes to megabyte
+            self.net_recv.append(msg.time, msg.net_recv / 1000)     # Convert bytes to kilobyte
 
     @qtc.pyqtSlot()
     def update_bme280(self):

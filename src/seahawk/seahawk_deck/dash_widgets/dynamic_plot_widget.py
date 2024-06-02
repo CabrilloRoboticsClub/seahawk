@@ -56,6 +56,19 @@ class DynamicPlotWidget(qtw.QWidget):
   
         # Apply css styling
         self.set_colors(colors)
+    
+    def append(self, x, y):
+        """
+        Append new data to the line
+
+        Args:
+            x, y: New point to append
+        """
+        if len(self.x) > 80:
+            self.x = self.x[1:]
+            self.y = self.y[1:]
+        self.x.append(x)
+        self.y.append(y)
 
     def update(self, x, y):
         """
@@ -64,11 +77,7 @@ class DynamicPlotWidget(qtw.QWidget):
         Args:
             x, y: New point to display
         """
-        if len(self.x) > 10:
-            self.x = self.x[1:]
-            self.y = self.y[1:]
-        self.x.append(x)
-        self.y.append(y)
+        self.append(x, y)
         self.line.setData(self.x, self.y, pen=self.pen)
     
     def set_colors(self, new_colors: dict):
