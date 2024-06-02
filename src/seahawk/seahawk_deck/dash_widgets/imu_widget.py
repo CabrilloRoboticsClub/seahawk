@@ -12,15 +12,17 @@ class IMU_Widget(qtw.QWidget):
     """
 
     def __init__(self, parent: qtw.QWidget, colors):
-        """
-        Initialize the IMU widget
-
-        Args:
-            parent: Widget to overlay 'IMU Widget' on
-        """
-
         super().__init__(parent)
 
+        self.linear_accel_x = None
+        self.linear_accel_y = None
+        self.linear_accel_z = None
+
+        self._init_ros_()
+        self._init_ui()
+
+
+    def _init_ui(self):
         # Create an outer layout for all widgets to mount on
         layout_outer = qtw.QVBoxLayout(self)
         self.setLayout(layout_outer)
@@ -34,7 +36,10 @@ class IMU_Widget(qtw.QWidget):
         self.frame.setLayout(layout_inner)
 
 
-        self.create_subscrition(
+    def _init_ros_ (self):
+        self.node = rclpy.create_node('imu_widget_node')
+
+        self.imu_subscription = self.create_subscrition(
             Imu,
             'bno085',
             self.imu_callback,
@@ -46,9 +51,8 @@ class IMU_Widget(qtw.QWidget):
         self.linear_accel_y = self.imu_data.linear_acceleration.y
         self.linear_accel_z = self.imu_data.linear_acceleration.z
 
+        self.imu_widget()
 
+    def imu_widget():
 
-
-
-
-
+        
