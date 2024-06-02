@@ -1,11 +1,12 @@
 # dynamic_plot_widget.py
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtCore as qtc
-import pyqtgraph as pg
+from collections import deque
 
+from PyQt5 import QtWidgets as qtw
+import pyqtgraph as pg
 
 from seahawk_deck.dash_styling.color_palette import DARK_MODE
 COLOR_CONSTS = DARK_MODE
+
 
 class DynamicPlotWidget(qtw.QWidget):
     """
@@ -26,7 +27,7 @@ class DynamicPlotWidget(qtw.QWidget):
         with open(style_sheet_file) as style_sheet:
             self.style_sheet = style_sheet.read()
 
-        self.x, self.y = [], []
+        self.x, self.y = deque([], maxlen=80), deque([], maxlen=80)
         layout_outer = qtw.QVBoxLayout(self)
         self.setLayout(layout_outer)
         frame = qtw.QFrame()
@@ -64,9 +65,6 @@ class DynamicPlotWidget(qtw.QWidget):
         Args:
             x, y: New point to append
         """
-        if len(self.x) > 80:
-            self.x = self.x[1:]
-            self.y = self.y[1:]
         self.x.append(x)
         self.y.append(y)
 
