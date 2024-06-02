@@ -43,8 +43,8 @@ def generate_launch_description():
         ),
         Node(
             package='seahawk',
-            executable='spinny_thing',
-            name='spinny_thing',
+            executable='i2c',
+            name='i2c',
             output='screen'
         ),
     ]
