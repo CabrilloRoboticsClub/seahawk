@@ -539,9 +539,9 @@ class TabWidget(qtw.QWidget):
         term_layout = qtw.QVBoxLayout()
 
         self.leak = NumericDataWidget(tab, "Leak Status", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.humidity = NumericDataWidget(tab, "Humidity", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.barometric_pressure = NumericDataWidget(tab, "Barometric Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.ambient_temperature = NumericDataWidget(tab, "Ambient Temp", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.humidity = NumericDataWidget(tab, "Humidity (%)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.barometric_pressure = NumericDataWidget(tab, "Pressure (atm)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.ambient_temperature = NumericDataWidget(tab, "Ambient Temp (°F)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         
         info_layout.addWidget(self.leak)
         info_layout.addWidget(self.humidity)
@@ -577,16 +577,16 @@ class TabWidget(qtw.QWidget):
             self.cpu_usage.update(msg.time, msg.cpu_usage)
             self.memory_usage.update(msg.time, msg.memory_usage)
             self.cpu_temperature.update(msg.time, msg.cpu_temperature)
-            self.net_sent.update(msg.time, msg.net_sent / 1000000)  # Convert to megabyte
-            self.net_recv.update(msg.time, msg.net_recv / 1000)     # Convert to kilobyte
+            self.net_sent.update(msg.time, msg.net_sent / 1000000)  # Convert bytes to megabyte
+            self.net_recv.update(msg.time, msg.net_recv / 1000)     # Convert bytes to kilobyte
 
     @qtc.pyqtSlot()
     def update_bme280(self):
         if self.debug_open:
             msg = self.ros_qt_bridge.bme280_msg
-            self.humidity.update(msg.temperature)
-            self.barometric_pressure.update(msg.humidity)
-            self.ambient_temperature.update(msg.pressure)
+            self.humidity.update(msg.humidity)
+            self.barometric_pressure.update(msg.pressure * 0.001315)        # Convert torr to atm
+            self.ambient_temperature.update(msg.temperature * 9 / 5 + 32)   # Convert C to F
 
 
 class Dash(Node):
