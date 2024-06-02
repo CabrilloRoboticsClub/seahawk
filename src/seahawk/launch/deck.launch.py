@@ -39,12 +39,12 @@ def generate_launch_description():
         Node(
             package='image_transport',
             executable='republish',
-            name='republish_claw_camera',
+            name='republish_back_camera',
             output='screen',
             arguments=['h264', 'raw', '--ros-args', '--log-level', 'fatal'],
             remappings=[
-                ('/in/h264', 'camera/claw/h264'),
-                ('/out', 'camera/claw/image'),
+                ('/in/h264', 'camera/back/h264'),
+                ('/out', 'camera/back/image'),
             ],
             parameters=[{
                 'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
@@ -56,12 +56,12 @@ def generate_launch_description():
         Node(
             package='image_transport',
             executable='republish',
-            name='republish_top_camera',
+            name='republish_front_camera',
             output='screen',
             arguments=['h264', 'raw', '--ros-args', '--log-level', 'fatal'],
             remappings=[
-                ('/in/h264', 'camera/top/h264'),
-                ('/out', 'camera/top/image'),
+                ('/in/h264', 'camera/front/h264'),
+                ('/out', 'camera/front/image'),
             ],
             parameters=[{
                 'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
