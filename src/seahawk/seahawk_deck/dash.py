@@ -355,7 +355,8 @@ class TabWidget(qtw.QWidget):
         tabs = qtw.QTabWidget()
         tabs.currentChanged.connect(self.tab_changed)
         
-        # Start debug as not open
+        # Tabs open
+        self.pilot_open = True
         self.debug_open = False
 
         # Create a dict in which the key is the provided name of the tab, and the value is a qtw.QWidget() object
@@ -468,7 +469,8 @@ class TabWidget(qtw.QWidget):
             if i == index:
                 tab.setFocus()
 
-        # Set if the tab is open to debug
+        # Track states of tabs
+        self.pilot_open = index == 0
         self.debug_open = index == 2
 
     @staticmethod
@@ -499,21 +501,24 @@ class TabWidget(qtw.QWidget):
         """
         Slot which updates front camera image on the dashboard.
         """
-        TabWidget.update_cam_img(self.ros_qt_bridge.cam_front_msg, self.cam_front)
+        if self.pilot_open:
+            TabWidget.update_cam_img(self.ros_qt_bridge.cam_front_msg, self.cam_front)
     
     @qtc.pyqtSlot()
     def update_cam_claw(self):
         """
         Slot which updates claw camera image on the dashboard.
-        """     
-        TabWidget.update_cam_img(self.ros_qt_bridge.cam_claw_msg, self.cam_claw)
+        """
+        if self.pilot_open:
+            TabWidget.update_cam_img(self.ros_qt_bridge.cam_claw_msg, self.cam_claw)
     
     @qtc.pyqtSlot()
     def update_cam_top(self):
         """
         Slot which updates front top image on the dashboard.
         """
-        TabWidget.update_cam_img(self.ros_qt_bridge.cam_top_msg, self.cam_top)
+        if self.pilot_open:
+            TabWidget.update_cam_img(self.ros_qt_bridge.cam_top_msg, self.cam_top)
 
     @qtc.pyqtSlot()
     def update_pilot_tab_input_states(self):
