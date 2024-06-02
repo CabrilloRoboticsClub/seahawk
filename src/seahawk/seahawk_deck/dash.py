@@ -39,7 +39,7 @@ class RosQtBridge(qtw.QWidget):
     
     # Signals (must be class variables)
     new_input_state_msg_sgl = qtc.pyqtSignal()
-    new_cam_front_msg_sgl = qtc.pyqtSignal()
+    new_cam_down_msg_sgl = qtc.pyqtSignal()
     new_cam_claw_msg_sgl = qtc.pyqtSignal()
     new_cam_top_msg_sgl = qtc.pyqtSignal()
     new_com_param_sgl = qtc.pyqtSignal()
@@ -55,7 +55,7 @@ class RosQtBridge(qtw.QWidget):
         super().__init__()
         # Variables to transfer data between ROS and Qt
         self.input_state_msg = None
-        self.cam_front_msg = None 
+        self.cam_down_msg = None 
         self.cam_claw_msg = None
         self.cam_top_msg = None
         self.com = [0.0] * 3
@@ -76,17 +76,17 @@ class RosQtBridge(qtw.QWidget):
         self.input_state_msg = msg
         self.new_input_state_msg_sgl.emit()
 
-    def callback_cam_front(self, msg: Image):
+    def callback_cam_down(self, msg: Image):
         """
-        Called for each time a message is published to the `camera/front/h264` topic.
-        Collects the contents of the message sent and emits a `new_cam_front_msg_sgl`
+        Called for each time a message is published to the `camera/down/h264` topic.
+        Collects the contents of the message sent and emits a `new_cam_down_msg_sgl`
         signal which is received by Qt.
 
         Args:
-            msg: Message of type `Image` from the `camera/front/h264` topic.
+            msg: Message of type `Image` from the `camera/down/h264` topic.
         """
-        self.cam_front_msg = msg
-        self.new_cam_front_msg_sgl.emit()
+        self.cam_down_msg = msg
+        self.new_cam_down_msg_sgl.emit()
 
     def callback_cam_claw(self, msg: Image):
         """
@@ -341,7 +341,7 @@ class TabWidget(qtw.QWidget):
         self.ros_qt_bridge = ros_qt_bridge
         # Connect signals to slots for thread safe communication between ROS and Qt
         self.ros_qt_bridge.new_input_state_msg_sgl.connect(self.update_pilot_tab_input_states)
-        self.ros_qt_bridge.new_cam_front_msg_sgl.connect(self.update_cam_front)
+        self.ros_qt_bridge.new_cam_down_msg_sgl.connect(self.update_cam_down)
         self.ros_qt_bridge.new_cam_claw_msg_sgl.connect(self.update_cam_claw)
         self.ros_qt_bridge.new_cam_top_msg_sgl.connect(self.update_cam_top)
         self.ros_qt_bridge.new_debug_sgl.connect(self.update_debug)
@@ -399,7 +399,7 @@ class TabWidget(qtw.QWidget):
             - Depth:            Displays the depth reading
             - IMU:              Displays the IMU readings as a turn/bank indicator (graphic to help keep constant acceleration)
             - Countdown:        Displays a countdown
-            - Front camera      Displays video feed from front camera
+            - Down camera      Displays video feed from down camera
             - Claw camera       Displays video feed from claw camera
             - Top camera        Displays video feed from top camera
             - Product demo map  Displays a static image of the product demo area map
@@ -433,7 +433,7 @@ class TabWidget(qtw.QWidget):
         vert_widgets_layout.addWidget(self.countdown_widget, stretch=20)
 
         # Setup cameras
-        self.cam_front = VideoFrame()
+        self.cam_down = VideoFrame()
         self.cam_claw = VideoFrame()
         self.cam_top = VideoFrame()
         
@@ -448,7 +448,7 @@ class TabWidget(qtw.QWidget):
 
         # (0, 0)    (0, 1)
         # (1, 0)    (1, 1)
-        cam_layout.addWidget(self.cam_front.label, 0, 0)
+        cam_layout.addWidget(self.cam_down.label, 0, 0)
         cam_layout.addWidget(self.cam_claw.label, 0, 1)
         cam_layout.addWidget(self.cam_top.label, 1, 0)
         cam_layout.addWidget(self.demo_map, 1, 1)
@@ -497,12 +497,12 @@ class TabWidget(qtw.QWidget):
         video_frame.label.setPixmap(qtg.QPixmap(frame))
 
     @qtc.pyqtSlot()
-    def update_cam_front(self):
+    def update_cam_down(self):
         """
-        Slot which updates front camera image on the dashboard.
+        Slot which updates down camera image on the dashboard.
         """
         if self.pilot_open:
-            TabWidget.update_cam_img(self.ros_qt_bridge.cam_front_msg, self.cam_front)
+            TabWidget.update_cam_img(self.ros_qt_bridge.cam_down_msg, self.cam_down)
     
     @qtc.pyqtSlot()
     def update_cam_claw(self):
@@ -515,7 +515,7 @@ class TabWidget(qtw.QWidget):
     @qtc.pyqtSlot()
     def update_cam_top(self):
         """
-        Slot which updates front top image on the dashboard.
+        Slot which updates top image on the dashboard.
         """
         if self.pilot_open:
             TabWidget.update_cam_img(self.ros_qt_bridge.cam_top_msg, self.cam_top)
@@ -619,9 +619,9 @@ class Dash(Node):
         self.create_subscription(InputStates, "input_states", ros_qt_bridge.callback_input_states, 10)        
         self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
         self.create_subscription(Bme280, "bme280", ros_qt_bridge.callback_bme280, 10)
-        self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
-        self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
-        self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
+        self.create_subscription(Image, "camera/down/image", ros_qt_bridge.callback_cam_down, 10)
+        # self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
+        # self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.callback_param_event, 10)
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))

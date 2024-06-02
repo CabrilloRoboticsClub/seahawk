@@ -22,12 +22,12 @@ def generate_launch_description():
         Node(
             package='image_transport',
             executable='republish',
-            name='republish_front_camera',
+            name='republish_down_camera',
             output='screen',
             arguments=['h264', 'raw', '--ros-args', '--log-level', 'fatal'],
             remappings=[
-                ('/in/h264', 'camera/front/h264'),
-                ('/out', 'camera/front/image'),
+                ('/in/h264', 'camera/down/h264'),
+                ('/out', 'camera/down/image'),
             ],
             parameters=[{
                 'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
