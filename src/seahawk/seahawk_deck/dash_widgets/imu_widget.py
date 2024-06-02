@@ -1,6 +1,10 @@
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 
+import rclpy
+from rclpy.node import Node 
+from sensor_msgs.msg import Imu
+
 class IMU_Widget(qtw.QWidget):
     """
     Creates a widget that displays the lateral acceleration of the ROV. This widget
@@ -29,7 +33,20 @@ class IMU_Widget(qtw.QWidget):
         layout_inner = qtw.QVBoxLayout(self)
         self.frame.setLayout(layout_inner)
 
-        
+
+        self.create_subscrition(
+            Imu,
+            'bno085',
+            self.imu_callback,
+            10
+        )
+
+    def imu_callback(self, imu_data):
+        self.linear_accel_x = self.imu_data.linear_acceleration.x  # probably redundant
+        self.linear_accel_y = self.imu_data.linear_acceleration.y
+        self.linear_accel_z = self.imu_data.linear_acceleration.z
+
+
 
 
 
