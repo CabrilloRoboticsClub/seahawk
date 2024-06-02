@@ -29,7 +29,6 @@ import psutil
 from time import time
 from psutil._common import bytes2human
 from rclpy.node import Node
-import RPi.GPIO as GPIO
 from seahawk_msgs.msg import DebugInfo
 
 
@@ -43,10 +42,6 @@ class Debug(Node):
         # Setup node
         self._publisher = self.create_publisher(DebugInfo, "debug_info", 10)
         self.timer = self.create_timer(1.0, self.pub_callback) 
-        self.pins = {
-            # Analog pin, anywhere past 50 be concerned
-            "leak_detector_pcb": 17,
-        }
 
         # Setup for debug information
         self.time = time()
@@ -84,21 +79,12 @@ class Debug(Node):
 
         self._publisher.publish(msg)
 
-    def __del__(self):
-        """
-        "Destructor" for node. Cleans up pins when we are done with them.
-        """
-        GPIO.cleanup()
-
 
 def main(args=None):
     rclpy.init(args=args)
     node = Debug()
-    try: 
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        del node
-        rclpy.shutdown()
+    rclpy.spin(node)
+    rclpy.shutdown()
 
 if __name__ == "__main__":
     main()
