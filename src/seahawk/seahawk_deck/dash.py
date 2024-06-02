@@ -24,7 +24,7 @@ from seahawk_deck.dash_widgets.term_widget import TermWidget
 from seahawk_deck.set_remote_params import SetRemoteParams
 from seahawk_deck.dash_widgets.tri_numeric_data_widget import TriNumericDataWidget
 from seahawk_deck.dash_widgets.dynamic_plot_widget import DynamicPlotWidget
-from seahawk_msgs.msg import InputStates, DebugInfo
+from seahawk_msgs.msg import InputStates, DebugInfo, Bme280
 
 PATH = path.dirname(__file__)
 
@@ -44,6 +44,7 @@ class RosQtBridge(qtw.QWidget):
     new_cam_top_msg_sgl = qtc.pyqtSignal()
     new_com_param_sgl = qtc.pyqtSignal()
     new_debug_sgl = qtc.pyqtSignal()
+    new_bme280_sgl = qtc.pyqtSignal()
     new_publisher_sgl = qtc.pyqtSignal()
     new_set_params_sgl = qtc.pyqtSignal()
 
@@ -59,6 +60,7 @@ class RosQtBridge(qtw.QWidget):
         self.cam_top_msg = None
         self.com = [0.0] * 3
         self.debug_msg = None
+        self.bme280_msg = None
         self.keystroke_pub = None
         self.pilot_input_set_params = None
 
@@ -138,6 +140,18 @@ class RosQtBridge(qtw.QWidget):
         """
         self.debug_msg = msg
         self.new_debug_sgl.emit()
+    
+    def callback_bme280(self, msg: Bme280):
+        """
+        Called for each time a message is published to the `bme280` topic.
+        Collects the contents of the message sent and emits a `new_bme280_sgl`
+        signal which is received by Qt.
+
+        Args:
+            msg: Message of type `Bme280` from the `bme280` topic
+        """
+        self.bme280_msg = msg
+        self.new_bme280_sgl.emit()
 
     def add_publisher(self, pub: Publisher):
         """
@@ -296,7 +310,7 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.cpu_temperature.set_colors(self.colors)
         self.tab_widget.net_sent.set_colors(self.colors)
         self.tab_widget.net_recv.set_colors(self.colors)
-        
+
 
 class TabWidget(qtw.QWidget):
     """
@@ -331,6 +345,7 @@ class TabWidget(qtw.QWidget):
         self.ros_qt_bridge.new_cam_claw_msg_sgl.connect(self.update_cam_claw)
         self.ros_qt_bridge.new_cam_top_msg_sgl.connect(self.update_cam_top)
         self.ros_qt_bridge.new_debug_sgl.connect(self.update_debug)
+        self.ros_qt_bridge.new_bme280_sgl.connect(self.update_bme280)
     
         # Define layout of tabs
         layout = qtw.QVBoxLayout(self)
@@ -568,9 +583,11 @@ class TabWidget(qtw.QWidget):
     @qtc.pyqtSlot()
     def update_bme280(self):
         if self.debug_open:
-            pass
-            # TODO: Do stuff (it would be cool)
-            # This is not connected
+            msg = self.ros_qt_bridge.bme280_msg
+            self.humidity.update(msg.temperature)
+            self.barometric_pressure.update(msg.humidity)
+            self.ambient_temperature.update(msg.pressure)
+
 
 class Dash(Node):
     """
@@ -588,6 +605,7 @@ class Dash(Node):
 
         self.create_subscription(InputStates, "input_states", ros_qt_bridge.callback_input_states, 10)        
         self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
+        self.create_subscription(Bme280, "bme280", ros_qt_bridge.callback_bme280, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
