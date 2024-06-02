@@ -48,6 +48,8 @@ class Claws(Node):
             "claw_2":       12,
         }
         self.bool_to_mode = {True: GPIO.HIGH, False: GPIO.LOW}
+        
+        GPIO.setmode(GPIO.BCM)
 
         # Set claw GPIO pins to out
         GPIO.setup(self.claw_pins["main_claw"], GPIO.OUT)

@@ -7,7 +7,14 @@ package_name = 'seahawk'
 setup(
     name=package_name,
     version='0.0.1',
-    packages=['seahawk_deck', 'seahawk_rov', 'seahawk_deck.dash_styling', 'seahawk_deck.dash_widgets'],
+    packages=[
+        'seahawk_deck', 
+        'seahawk_rov', 
+        'seahawk_deck.dash_styling', 
+        'seahawk_deck.dash_widgets', 
+        'seahawk_rov.i2c_sensors', 
+        'seahawk_rov.i2c_sensors.ms5837'
+    ],
     data_files=[
         ('share/ament_index/resource_index/packages', ['resources/' + package_name]),
         (os.path.join('share', package_name), ['package.xml']),
@@ -26,7 +33,7 @@ setup(
         'console_scripts': [
             "debug=seahawk_rov.debug:main",
             "claws=seahawk_rov.claws:main",
-            "spinny_thing=seahawk_rov.spinny_thing:main",
+            "i2c=seahawk_rov.i2c:main",
             "thrust=seahawk_deck.thrust:main",
             "pilot_input=seahawk_deck.pilot_input:main",
             "rviz_markers=seahawk_deck.rviz_markers:main",
