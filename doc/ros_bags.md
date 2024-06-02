@@ -5,7 +5,7 @@ ROS bags used to record and the replay messages sent over a topic. This can be u
 | Content | Bag | Documentation | 
 | ----- | ------ | ----- |
 | H264 recording | [h264_recording](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/tree/docs/bags/h264_recording) | [h264_recording.md](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/blob/main/bags/h264_recording/h264_recording.md)
-| IMU recording | [imu_recording](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/tree/docs/bags/imu_recording) | None
+| IMU recording | [imu_recording](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/tree/main/bags/imu_recording) | None
 | Joystick recording | [joy_recording](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/tree/docs/bags/joy_recording) | [joy_recording.md](https://github.com/CabrilloRoboticsClub/cabrillo_rov_2023/blob/main/bags/joy_recording/joy_recording.md)
 
 ## Creating a ROS bag
