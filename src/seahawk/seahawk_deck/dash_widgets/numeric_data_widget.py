@@ -50,14 +50,14 @@ class NumericDataWidget(qtw.QWidget):
 
         self.set_colors(colors)
 
-    def update(self, data: str):
+    def update(self, data: float):
         """
         Update data displayed by widget.
 
         Args:
             data: New data to display.
         """
-        self.numeric_data.setText(data)
+        self.numeric_data.setText(f"{data:.2f}")
 
     def set_colors(self, new_colors: dict):
         """
