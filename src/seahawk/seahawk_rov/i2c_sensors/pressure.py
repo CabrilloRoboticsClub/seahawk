@@ -27,7 +27,6 @@ cabrillorobotics@gmail.com
 
 from seahawk_msgs.msg import PressureSensor
 import ms5837
-from ms5837 import MS5837_30BA
 
 class Pressure:
 
@@ -44,7 +43,7 @@ class Pressure:
         self.sensor.setFluidDensity(water_density)  # Set fluid density 997 kg/m^3
         self.pascal = ms5837.UNITS_Pa
 
-    def pressure_callback(self):
+    def pub_callback(self):
         pressure_msg = PressureSensor()  # create a obj of type Pressure
 
         if self.sensor.read():
