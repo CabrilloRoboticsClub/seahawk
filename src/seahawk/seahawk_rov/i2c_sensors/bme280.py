@@ -48,9 +48,9 @@ class BME280:
         """
         try:
             msg = Bme280()
-            msg.temperature = self.bme280.temperature
-            msg.humidity = self.bme280.humidity
-            msg.pressure = self.bme280.pressure
+            msg.temperature = self.bme280.temperature   # °C
+            msg.humidity = self.bme280.humidity         # %
+            msg.pressure = self.bme280.pressure         # torrs
             self.publisher.publish(msg)
         except OSError as e:
             self.node.get_logger().info("Warning: BME280 failed to publish (OSError)\n", e)
