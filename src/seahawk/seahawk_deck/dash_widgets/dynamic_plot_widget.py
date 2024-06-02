@@ -64,8 +64,7 @@ class DynamicPlotWidget(qtw.QWidget):
         Args:
             x, y: New point to display
         """
-        # Your code here
-        if len(self.x) > 12:
+        if len(self.x) > 10:
             self.x = self.x[1:]
             self.y = self.y[1:]
         self.x.append(x)
