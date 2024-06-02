@@ -45,7 +45,7 @@ class I2C(Node):
         """
         super().__init__("i2c")
         # Grab the i2c interface for us to use
-        i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
+        i2c = busio.I2C(board.SCL, board.SDA)
         self.bno085 = BNO085(self, i2c)  # IMU
         self.bme280 = BME280(self, i2c)  # Pressure, Temperature, Humidity
         # self.pressure = Pressure(self, i2c)
