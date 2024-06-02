@@ -42,7 +42,7 @@ class Debug(Node):
         super().__init__("debug")
         # Setup node
         self._publisher = self.create_publisher(DebugInfo, "debug_info", 10)
-        self.timer = self.create_timer(0.5, self.pub_callback) 
+        self.timer = self.create_timer(1.0, self.pub_callback) 
         self.pins = {
             # Analog pin, anywhere past 50 be concerned
             "leak_detector_pcb": 17,
