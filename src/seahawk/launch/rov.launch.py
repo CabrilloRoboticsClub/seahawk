@@ -9,8 +9,8 @@ from launch.substitutions import FindExecutable
 from launch.event_handlers import OnShutdown
 
 # Camera paths
-claw_camera_path    = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1:1.0-video-index2'
-top_camera_path     = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2:1.0-video-index2'
+back_camera_path    = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1:1.0-video-index2'
+front_camera_path     = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2:1.0-video-index2'
 down_camera_path   = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.3:1.0-video-index2'
 
 microros_serial_device = "/dev/ttyS0"
@@ -65,57 +65,57 @@ def generate_launch_description():
             ),
         )
 
-    if pathlib.Path(claw_camera_path).exists():
+    if pathlib.Path(back_camera_path).exists():
         nodes.append(
             Node(
                 package='h264_image_transport',
                 executable='h264_cam_node',
-                name='claw_camera',
+                name='back_camera',
                 output='both',
                 respawn=True,
                 respawn_delay=0,
                 parameters=[{
-                    'input_fn': str(pathlib.Path(claw_camera_path).resolve()),
+                    'input_fn': str(pathlib.Path(back_camera_path).resolve()),
                     'fps': 30,
                     'size': '640x480',
-                    'frame_id': 'claw_camera',
+                    'frame_id': 'back_camera',
                     'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
                     'qos_overrides./parameter_events.publisher.history': 'keep_last',
                     'qos_overrides./parameters_events.publisher.durability': 'volatile',
                     'qos_overrides./parameter_events.publisher.depth': 1,
                 }],
                 remappings=[
-                    ('image_raw/h264', 'camera/claw/h264'),
+                    ('image_raw/h264', 'camera/back/h264'),
                 ],
             ))
     else:
-        print("Claw camera not found!")
+        print("back camera not found!")
 
-    if pathlib.Path(top_camera_path).exists():
+    if pathlib.Path(front_camera_path).exists():
         nodes.append(
             Node(
                 package='h264_image_transport',
                 executable='h264_cam_node',
-                name='top_camera',
+                name='front_camera',
                 output='both',
                 respawn=True,
                 respawn_delay=0,
                 parameters=[{
-                    'input_fn': str(pathlib.Path(top_camera_path).resolve()),
+                    'input_fn': str(pathlib.Path(front_camera_path).resolve()),
                     'fps': 30,
                     'size': '640x480',
-                    'frame_id': 'top_camera',
+                    'frame_id': 'front_camera',
                     'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
                     'qos_overrides./parameter_events.publisher.history': 'keep_last',
                     'qos_overrides./parameters_events.publisher.durability': 'volatile',
                     'qos_overrides./parameter_events.publisher.depth': 1,
                 }],
                 remappings=[
-                    ('image_raw/h264', 'camera/top/h264'),
+                    ('image_raw/h264', 'camera/front/h264'),
                 ]
             ))
     else:
-        print("Top camera not found!")
+        print("front camera not found!")
 
     if microros_serial_device is not None and pathlib.Path(microros_serial_device).exists():
         nodes.append(
