@@ -12,7 +12,11 @@ class PaintWidget(qtw.QWidget):
 
     def __init__(self):
         super().__init__()
-        self.vector = qtg.QVector2D(0,0) # set dummy values
+        self.width = 500  # temporary
+        self.setFixedWidth(self.width)
+        self.height = 500  # temporary
+        self.setFixedHeight(self.height)
+        self.vector = qtg.QVector2D(0, 0) # set dummy values
 
     def paintEvent (self, event):
         painter = qtg.QPainter(self)
