@@ -16,7 +16,7 @@ class PaintWidget(qtw.QWidget):
         self.setFixedWidth(self.width)
         self.height = 500  # temporary
         self.setFixedHeight(self.height)
-        self.vector = qtg.QVector2D(0, 0) # set dummy values
+        self.vector = qtg.QVector3D(0, 0, 0) # set dummy values
 
     def paintEvent (self, event):
         painter = qtg.QPainter(self)
@@ -47,6 +47,7 @@ class PaintWidget(qtw.QWidget):
     def create_vector(self, x_cord, y_cord, z_cord):
         self.vector.setX(x_cord)
         self.vector.setY(y_cord)
+        self.vector.setZ(z_cord)
 
         self.update()
 
@@ -68,7 +69,6 @@ class IMU_Widget(qtw.QWidget):
         self._init_ros_()
         self._init_ui()
 
-
     def _init_ui(self):
         # Create an outer layout for all widgets to mount on
         layout_outer = qtw.QVBoxLayout(self)
@@ -84,7 +84,6 @@ class IMU_Widget(qtw.QWidget):
 
         paint_widget = PaintWidget()
         self.layout_inner.addWidget(paint_widget)
-
 
     def _init_ros_ (self):
         self.node = rclpy.create_node('imu_widget_node')
