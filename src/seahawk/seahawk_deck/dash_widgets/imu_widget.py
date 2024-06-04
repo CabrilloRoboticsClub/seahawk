@@ -17,9 +17,28 @@ class PaintWidget(qtw.QWidget):
     def paintEvent (self, event):
         painter = qtg.QPainter(self)
         painter.setRenderHint(qtg.QPainter.Antialiasing)
-        pen = qtg.QPen(qtg.Qt.black, 10)
+        painter.translate(self.width/2, self.height/2)
+        painter.scale(1, -1)
+        pen = qtg.QPen(qtg.Qt.black, 5)
         painter.setPen(pen)
-        painter.drawLine(int(self.width() / 2), int(self.height()/2), int(self.vector.x()), int(self.vector.y()))
+        
+        painter.drawLine(0, 0, int(self.vector.x()), int(self.vector.y()))
+
+        pen = qtg.QPen(qtg.Qt.black, 12)
+        painter.setPen(pen)
+        painter.drawPoint(int(self.vector.x()), int(self.vector.y()))
+
+        pen = qtg.QPen(qtg.Qt.red, 10)
+        painter.setPen(pen)
+        painter.drawPoint(0, 0)
+
+        pen = qtg.QPen(qtg.Qt.red, 3)
+        painter.setPen(pen)
+        painter.drawLine(0, int(self.height), 0, -int(self.height))
+        painter.drawLine(int(self.width), 0, -int(self.width), 0)
+        painter.drawEllipse(-int(self.width/2), -int(self.height/2), self.width, self.height)
+
+        painter.end()
 
     def create_vector(self, x_cord, y_cord, z_cord):
         self.vector.setX(x_cord)
