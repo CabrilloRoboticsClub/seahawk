@@ -1,9 +1,33 @@
 from PyQt5 import QtWidgets as qtw
+# from PyQt5.QtGui import QPainter, QPen, QVector2D
 from PyQt5 import QtGui as qtg
+from PyQt5 import QtCore, QtGui
 
 import rclpy
 from rclpy.node import Node 
 from sensor_msgs.msg import Imu
+
+
+class PaintWidget(qtw.QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.vector = qtg.QVector2D(0,0) # set dummy values
+
+    def paintEvent (self, event):
+        painter = qtg.QPainter(self)
+        painter.setRenderHint(qtg.QPainter.Antialiasing)
+        pen = qtg.QPen(qtg.Qt.black, 10)
+        painter.setPen(pen)
+        painter.drawLine(int(self.width() / 2), int(self.height()/2), int(self.vector.x()), int(self.vector.y()))
+
+    def create_vector(self, x_cord, y_cord, z_cord):
+        self.vector.setX(x_cord)
+        self.vector.setY(y_cord)
+
+        self.update()
+
+
 
 class IMU_Widget(qtw.QWidget):
     """
@@ -35,6 +59,9 @@ class IMU_Widget(qtw.QWidget):
         layout_inner = qtw.QVBoxLayout(self)
         self.frame.setLayout(layout_inner)
 
+        paint_widget = PaintWidget()
+        self.layout_inner.addWidget(paint_widget)
+
 
     def _init_ros_ (self):
         self.node = rclpy.create_node('imu_widget_node')
@@ -51,8 +78,8 @@ class IMU_Widget(qtw.QWidget):
         self.linear_accel_y = self.imu_data.linear_acceleration.y
         self.linear_accel_z = self.imu_data.linear_acceleration.z
 
-        self.imu_widget()
+        self.paint_widget.create_vector(self.linear_accel_x, self.linear_accel_y, self.linear_accel_z)
 
-    def imu_widget():
-
+        
+        
         
