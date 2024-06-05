@@ -99,6 +99,9 @@ class IMU_Widget(qtw.QWidget):
         layout_inner = qtw.QVBoxLayout(self)
         self.frame.setLayout(layout_inner)
 
+        self.setFixedWidth(600)
+        self.setFixedHeight(600)
+
         paint_widget = PaintWidget()
         self.layout_inner.addWidget(paint_widget)
 
