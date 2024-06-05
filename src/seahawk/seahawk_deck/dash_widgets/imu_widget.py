@@ -16,7 +16,17 @@ class PaintWidget(qtw.QWidget):
         self.setFixedWidth(self.width)
         self.height = 500  # temporary
         self.setFixedHeight(self.height)
+        self.offset = 50
         self.vector = qtg.QVector3D(0, 0, 0) # set dummy values
+        self.img1 = "arrow_empty_transparent.png"
+        self.img2 = "arrow_orange_transparent.png"
+
+    def create_vector(self, x_cord, y_cord, z_cord):
+        self.vector.setX(x_cord)
+        self.vector.setY(y_cord)
+        self.vector.setZ(z_cord)
+
+        self.update()
 
     def paintEvent (self, event):
         painter = qtg.QPainter(self)
@@ -42,14 +52,21 @@ class PaintWidget(qtw.QWidget):
         painter.drawLine(int(self.width), 0, -int(self.width), 0)
         painter.drawEllipse(-int(self.width/2), -int(self.height/2), self.width, self.height)
 
+        if int(self.vector.z()) < 0:
+            painter.drawImage(170, 155, self.q_img2)
+            painter.rotate(180)
+            painter.drawImage(170, -245, self.q_img1)
+        elif int(self.vector.z()) > 0:
+            painter.drawImage(170, 155, self.q_img1)
+            painter.rotate(180)
+            painter.drawImage(170, -245, self.q_img2)
+        else:
+            painter.drawImage(170, 155, self.q_img1)
+            painter.rotate(180)
+            painter.drawImage(170, -245, self.q_img1)
+
         painter.end()
 
-    def create_vector(self, x_cord, y_cord, z_cord):
-        self.vector.setX(x_cord)
-        self.vector.setY(y_cord)
-        self.vector.setZ(z_cord)
-
-        self.update()
 
 
 
