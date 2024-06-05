@@ -12,7 +12,7 @@ from rclpy.node import Node
 from rclpy.publisher import Publisher
 from std_msgs.msg import String
 from rcl_interfaces.msg import ParameterEvent
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, Imu
 
 from seahawk_deck.dash_styling.color_palette import DARK_MODE, LIGHT_MODE
 from seahawk_deck.dash_widgets.countdown_widget import CountdownWidget
@@ -45,6 +45,8 @@ class RosQtBridge(qtw.QWidget):
     new_com_param_sgl = qtc.pyqtSignal()
     new_publisher_sgl = qtc.pyqtSignal()
     new_set_params_sgl = qtc.pyqtSignal()
+    new_linear_accel_msg_sgl = qtc.pyqtSignal()
+    # TODO: Add IMU signal DONE
 
     def __init__(self):
         """
@@ -59,6 +61,9 @@ class RosQtBridge(qtw.QWidget):
         self.com = [0.0] * 3
         self.keystroke_pub = None
         self.pilot_input_set_params = None
+        self.linear_accel_msg = None
+        
+        # TODO Make variable for IMU message storage DONE
 
     def callback_input_states(self, msg: InputStates):
         """
@@ -107,6 +112,20 @@ class RosQtBridge(qtw.QWidget):
         """
         self.cam_top_msg = msg
         self.new_cam_top_msg_sgl.emit()
+
+    def imu_event_callback(self, msg: Imu):
+        """
+        Called for each time a message is published to the `bno085` topic.
+        Collects the contents of the message sent and emits a `new_linear_accel_msg_sgl`
+        signal which is received by Qt.
+
+        Args:
+            msg: Linear acceleration values camera/top/h264from the `bno085` topic
+        """
+        self.linear_accel_msg = msg
+        self.new_linear_accel_msg_sgl.emit()
+    
+    # TODO: Make callback_imu() callback function DONE
     
     def param_event_callback(self, msg: ParameterEvent):
         """
@@ -274,6 +293,8 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.turn_bank_indicator_widget.set_colors(self.colors)
         self.tab_widget.countdown_widget.set_colors(self.colors)
         self.tab_widget.term_widget.set_colors(self.colors)
+        self.tab_widget.imu_widget.set_colors(self.colors)
+        # TODO: Update IMU colors function
         
 
 class TabWidget(qtw.QWidget):
@@ -308,6 +329,8 @@ class TabWidget(qtw.QWidget):
         self.ros_qt_bridge.new_cam_front_msg_sgl.connect(self.update_cam_front)
         self.ros_qt_bridge.new_cam_claw_msg_sgl.connect(self.update_cam_claw)
         self.ros_qt_bridge.new_cam_top_msg_sgl.connect(self.update_cam_top)
+        self.ros_qt_bridge.new_linear_accel_msg_sgl.connect(self.update_linear_accel_msg)
+        # TODO: Connect IMU signal to a function DONE
     
         # Define layout of tabs
         layout = qtw.QVBoxLayout(self)
@@ -375,18 +398,18 @@ class TabWidget(qtw.QWidget):
         self.state_widget = StateWidget(tab, ["Bambi Mode", "Kill Button"], PATH + "/dash_styling/state_widget.txt", self.colors)
         self.com_shift_widget = TriNumericDataWidget(tab, "CoM Shift", PATH + "/dash_styling/tri_numeric_data_widget.txt", self.colors)
         self.thrt_crv_widget = ThrtCrvWidget(tab, self.colors)
-        self.turn_bank_indicator_widget = TurnBankIndicator(tab, PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.imu_widget = IMU_Widget(tab, self.colors)
         self.temp_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.depth_widget = NumericDataWidget(tab, "Depth", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.countdown_widget = CountdownWidget(tab, PATH + "/dash_styling/countdown_widget.txt", self.colors, minutes=15, seconds=0)
-        self.imu_widget = IMU_Widget(tab, self.colors)
+        
 
         # Add widgets to side vertical layout
         # Stretch modifies the ratios of the widgets (must add up to 100)
         vert_widgets_layout.addWidget(self.state_widget, stretch=13)
         vert_widgets_layout.addWidget(self.com_shift_widget, stretch=8)
         vert_widgets_layout.addWidget(self.thrt_crv_widget, stretch=18)
-        vert_widgets_layout.addWidget(self.turn_bank_indicator_widget, stretch=18)
+        vert_widgets_layout.addWidget(self.imu_widget, stretch=18)
         vert_widgets_layout.addWidget(self.temp_widget, stretch=11)
         vert_widgets_layout.addWidget(self.depth_widget, stretch=11)
         vert_widgets_layout.addWidget(self.countdown_widget, stretch=20)
@@ -411,7 +434,7 @@ class TabWidget(qtw.QWidget):
         cam_layout.addWidget(self.cam_claw.label, 0, 1)
         cam_layout.addWidget(self.cam_top.label, 1, 0)
         cam_layout.addWidget(self.demo_map, 1, 1)
-        cam_layout.addWidget(self.imu_widget, 1, 1)  # Massimo: I added this here for temp testing
+        # cam_layout.addWidget(self.imu_widget, 1, 1)  # Massimo: I added this here for temp testing
 
         home_window_layout.addLayout(vert_widgets_layout, stretch=1)
         home_window_layout.addLayout(cam_layout, stretch=9)
@@ -485,6 +508,13 @@ class TabWidget(qtw.QWidget):
         self.state_widget.update(input_state_dict)
         self.thrt_crv_widget.update(self.ros_qt_bridge.input_state_msg.thrt_crv)
 
+    # TODO: update_IMU() function
+    # Within this function, call the IMU widget's update() function
+    @qtc.pyqtSlot()
+    def update_linear_accel_msg(self):
+        # FIXME: Should be updating self.imu_widget.
+        self.imu_widget.imu_callback(self.ros_qt_bridge.linear_accel_msg)
+
     def create_debug_tab(self, tab: qtw.QWidget):
         # Setup layouts
         debug_layout = qtw.QHBoxLayout(tab)
@@ -534,6 +564,8 @@ class Dash(Node):
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.param_event_callback, 10)
+        self.create_subscription(Imu,'bno085', ros_qt_bridge.imu_event_callback, 10)
+        # TODO: Create subscription to bno085 message type imu DONE
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))
 
