@@ -620,7 +620,7 @@ class Dash(Node):
         self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
         self.create_subscription(Bme280, "bme280", ros_qt_bridge.callback_bme280, 10)
         self.create_subscription(Image, "camera/down/image", ros_qt_bridge.callback_cam_down, 10)
-        # self.create_subscription(Image, "camera/back/image", ros_qt_bridge.callback_cam_back, 10)
+        self.create_subscription(Image, "camera/back/image", ros_qt_bridge.callback_cam_back, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.callback_param_event, 10)
 
