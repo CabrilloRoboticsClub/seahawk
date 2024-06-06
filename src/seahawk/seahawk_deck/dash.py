@@ -564,7 +564,7 @@ class Dash(Node):
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.param_event_callback, 10)
-        self.create_subscription(Imu,'bno085', ros_qt_bridge.imu_event_callback, 10)
+        self.create_subscription(Imu,'/logic_tube/imu', ros_qt_bridge.imu_event_callback, 10)
         # TODO: Create subscription to bno085 message type imu DONE
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))
