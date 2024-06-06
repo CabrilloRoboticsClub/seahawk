@@ -42,7 +42,7 @@ class PaintWidget(qtw.QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.translate(self.width/2, self.height/2)
         painter.scale(1, -1)
-        pen = QPen(Qt.white, 5)
+        pen = QPen(Qt.white, 3)
         painter.setPen(pen)
 
         self.q_orange_up = QImage(self.orange_up)
@@ -59,11 +59,11 @@ class PaintWidget(qtw.QWidget):
         
         painter.drawLine(0, 0, int(self.vector.x()), int(self.vector.y()))
 
-        pen = QPen(Qt.white, 12)
+        pen = QPen(Qt.white, 7)
         painter.setPen(pen)
         painter.drawPoint(int(self.vector.x()), int(self.vector.y()))
 
-        pen = QPen(Qt.red, 5)
+        pen = QPen(Qt.red, 10)
         painter.setPen(pen)
         painter.drawPoint(0, 0)
 
