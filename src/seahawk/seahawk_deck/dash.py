@@ -448,9 +448,10 @@ class TabWidget(qtw.QWidget):
 
         # (0, 0)    (0, 1)
         # (1, 0)    (1, 1)
-        cam_layout.addWidget(self.cam_down.label, 0, 0)
-        cam_layout.addWidget(self.cam_back.label, 0, 1)
-        cam_layout.addWidget(self.cam_front.label, 1, 0)
+        
+        cam_layout.addWidget(self.cam_back.label, 0, 0)
+        cam_layout.addWidget(self.cam_front.label, 0, 1)
+        cam_layout.addWidget(self.cam_down.label, 1, 0)
         cam_layout.addWidget(self.demo_map, 1, 1)
 
         home_window_layout.addLayout(vert_widgets_layout, stretch=1)
