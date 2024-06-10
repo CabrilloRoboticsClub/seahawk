@@ -1,7 +1,7 @@
 """
-spinny_thing.py
+servo.py
 
-Spinnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+Servoooooooooooooooooooooooooooooooooooooo
 
 Copyright (C) 2022-2023 Cabrillo Robotics Club
 
@@ -32,44 +32,63 @@ import time
 
 class SpinnyThing(Node):
     """
-    Class which spins the spinny thing from the dpad left and right.
+    Class which spins the spinny thing (dpad left & right) & tilty thing (dpad up & down)
     """
     
     def __init__(self):
         """
-        Initialize `spinny_thing` mega node.
+        Initialize `servo` mega node.
         """
-        super().__init__("spinny_thing")
+        super().__init__("servos")
 
-        self.PIN = 19
+        self.PIN_SPINNY = 19
         self.CLOCKWISE = 3
         self.COUNTERCLOCKWISE = 10 
 
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.PIN, GPIO.OUT)
-        self.pwm = GPIO.PWM(self.PIN, 50)
-        self.pwm.start(0)
+        GPIO.setup(self.PIN_SPINNY, GPIO.OUT)
+        self.pwm_spinny = GPIO.PWM(self.PIN_SPINNY, 50)
+        self.pwm_spinny.start(0)
+
+        self.PIN_TILTY = 13
+
+        GPIO.setup(self.PIN_TILTY, GPIO.OUT)
+        self.pwm_tilty = GPIO.PWM(self.PIN_TILTY, 100)  # 100 is a placeholder number for now
+        self.pwm_tilty.start(0)
+
 
         self.create_subscription(Joy, "joy", self.callback, 10)
 
     def callback(self, msg: Joy):
         """
         Callback for every time the Joy message publishes.
-        Sends pwm to the spinny thing.
+        Sends pwm_spinny to the spinny thing 
+        Sends pwm_tilty to the tilty thing
         """
-        dpad = -int(msg.axes[6])
+
+        dpad = -int(msg.axes[6])  # dpad settings are left and right for the spinny thing
         if dpad == 1:
-            self.pwm.ChangeDutyCycle(self.CLOCKWISE)
+            self.pwm_spinny.ChangeDutyCycle(self.CLOCKWISE)
         elif dpad == -1:
-            self.pwm.ChangeDutyCycle(self.COUNTERCLOCKWISE)
+            self.pwm_spinny.ChangeDutyCycle(self.COUNTERCLOCKWISE)
         else:
-            self.pwm.ChangeDutyCycle(0)
+            self.pwm_spinny.ChangeDutyCycle(0)
+
+
+        dpad = -int(msg.axes[7])  # dpad settings are up and down for the tilty thing
+        if dpad == 1:
+            # tilt up
+        elif dpad == -1:
+            # tilt down
+        else:
+            # stay the same
 
     def __del__(self):
         """
         "Destructor" for node. Cleans up pins when we are done with them.
         """
-        self.pwm.stop()
+        self.pwm_spinny.stop()
+        self.pwm_tilty.stop()
         GPIO.cleanup()
 
 

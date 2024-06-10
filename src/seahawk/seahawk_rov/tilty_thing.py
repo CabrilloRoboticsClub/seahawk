@@ -47,7 +47,7 @@ class TiltyThing(Node):
         self.pwm = GPIO.PWM(self.PIN, 50)
         self.pwm.start(0)
 
-        
+        self.tilty_servo = servo.tilty_servo
 
         self.create_subscription(Joy, "joy", self.callback, 10)
 
@@ -74,7 +74,7 @@ class TiltyThing(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = TiltyThing()
+    node = TilyThing()
     try: 
         rclpy.spin(node)
     except KeyboardInterrupt:
