@@ -284,6 +284,13 @@ class MainWindow(qtw.QMainWindow):
             increment = [0.0 if i != ord(self.com_choice) - 88 else 0.01 if data in {"+", "="} else -0.01 for i in range(3)]
             self.thrust_set_params.update_params("center_of_mass_increment", increment)
             self.thrust_set_params.send_params()
+        
+        if data == "C":
+            self.thrust_set_params.update_params("center_of_mass_increment", 0.01)
+            self.thrust_set_params.send_params()
+        elif data == "V":
+            self.thrust_set_params.update_params("center_of_mass_increment", -0.01)
+            self.thrust_set_params.send_params()
 
         # Change colors mode between light and dark mode
         if data == "0":
