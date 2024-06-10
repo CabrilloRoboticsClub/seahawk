@@ -7,10 +7,10 @@ class PaintWidget(qtw.QWidget):
 
     def __init__(self):
         super().__init__()
-        self.height = 110
-        self.width = 110
+        self.height = 420
+        self.width = 420
         self.scale_value = 30
-        self.vector = QVector3D(0, 0, 0) # set dummy values
+        self.vector = QVector3D(0, 0, 0)  # set dummy values
 
         # TODO: these should be in the dash_styling directory then added to the color_palete.py dict. See file for what i mean
         # Also svgs work better, I can get you some if needed
@@ -91,7 +91,7 @@ class ImuWidget(qtw.QWidget):
     inherits from the 'qtw.QWidget' class.
     """
 
-    def __init__(self, parent: qtw.QWidget, colors):
+    def __init__(self, parent: qtw.QWidget, colors: dict):
         super().__init__(parent)
 
         self.linear_accel_x = None
@@ -103,9 +103,14 @@ class ImuWidget(qtw.QWidget):
         # TODO: load a style sheet (should be a param to init), see other widgets for example
 
     def _init_ui(self):
+
+        # with open(style_sheet_file) as style_sheet:
+        #     self.style_sheet = style_sheet.read()
+
         # Create an outer layout for all widgets to mount on
         self.layout_outer = qtw.QVBoxLayout(self)
         self.setLayout(self.layout_outer)
+        
 
         # Create a frame on outer layout
         self.frame = qtw.QFrame()
@@ -117,6 +122,7 @@ class ImuWidget(qtw.QWidget):
 
         self.paint_widget = PaintWidget()
         self.layout_inner.addWidget(self.paint_widget)
+
 
 
     def update(self, imu_data):
