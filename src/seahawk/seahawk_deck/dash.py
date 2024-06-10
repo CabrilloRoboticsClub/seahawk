@@ -459,7 +459,7 @@ class TabWidget(qtw.QWidget):
         self.cam_back = VideoFrame()
         self.cam_front = VideoFrame()
 
-        self.imu_widget = ImuWidget(tab, self.colors)
+        self.imu_widget = ImuWidget(tab, PATH + "/dash_styling/imu_widget.txt", self.colors)
 
         # (0, 0)    (0, 1)
         # (1, 0)    (1, 1)
