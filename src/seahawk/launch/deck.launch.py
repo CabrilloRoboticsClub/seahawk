@@ -17,7 +17,7 @@ def find_resource(package_name, relpath):
     return str(relpath)
         
 def generate_launch_description():
-    respawn_time = 5
+    respawn_time = 0
 
     return LaunchDescription([
         Node(
