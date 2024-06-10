@@ -37,9 +37,8 @@ class ThrtCrvWidget(qtw.QWidget):
         self.frame.setLayout(layout_inner)
 
         self.label = qtw.QLabel()
-        # Uncomment if we want the image to be dynamically sized (reduces quality)
-        # self.label.setScaledContents(True)
-        # self.label.setSizePolicy(qtw.QSizePolicy.Ignored, qtw.QSizePolicy.Ignored)
+        self.label.setScaledContents(True)
+        self.label.setSizePolicy(qtw.QSizePolicy.Ignored, qtw.QSizePolicy.Ignored)
     
         self.cur_crv = None
 
