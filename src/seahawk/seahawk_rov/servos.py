@@ -76,10 +76,13 @@ class Servo(Node):
 
         dpad = -int(msg.axes[7])  # dpad settings are up and down for the tilty thing
         if dpad == 1:
+            pass
             # tilt up
         elif dpad == -1:
+            pass
             # tilt down
         else:
+            pass
             # stay the same
 
     def __del__(self):
@@ -93,7 +96,7 @@ class Servo(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = SpinnyThing()
+    node = Servo()
     try: 
         rclpy.spin(node)
     except KeyboardInterrupt:
