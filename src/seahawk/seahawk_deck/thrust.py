@@ -68,8 +68,8 @@ class Thrust(Node):
             [-0.198,  0.156, -0.038], # Motor 6
             [-0.198, -0.156, -0.038]  # Motor 7
         ]
-        self.motor_positions = [(np.subtract(motor, [0.04, 0.025, -0.01]).tolist())
-                                for motor in self.motor_positions]
+        # self.motor_positions = [(np.subtract(motor, [0.04, 0.025, -0.01]).tolist())
+        #                         for motor in self.motor_positions]
         # (modified for bad props, hardware is stupid, the people not the concept)
         # TODO: eventually remove negs
         self.motor_thrusts = [ # [X, Y, Z] components of thrust for each motor

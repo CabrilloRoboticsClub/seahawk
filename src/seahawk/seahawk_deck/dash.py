@@ -24,7 +24,7 @@ from seahawk_deck.dash_widgets.term_widget import TermWidget
 from seahawk_deck.set_remote_params import SetRemoteParams
 from seahawk_deck.dash_widgets.tri_numeric_data_widget import TriNumericDataWidget
 from seahawk_deck.dash_widgets.dynamic_plot_widget import DynamicPlotWidget
-from seahawk_msgs.msg import InputStates, DebugInfo
+from seahawk_msgs.msg import InputStates, DebugInfo, Bme280
 
 PATH = path.dirname(__file__)
 
@@ -39,11 +39,12 @@ class RosQtBridge(qtw.QWidget):
     
     # Signals (must be class variables)
     new_input_state_msg_sgl = qtc.pyqtSignal()
+    new_cam_down_msg_sgl = qtc.pyqtSignal()
+    new_cam_back_msg_sgl = qtc.pyqtSignal()
     new_cam_front_msg_sgl = qtc.pyqtSignal()
-    new_cam_claw_msg_sgl = qtc.pyqtSignal()
-    new_cam_top_msg_sgl = qtc.pyqtSignal()
     new_com_param_sgl = qtc.pyqtSignal()
     new_debug_sgl = qtc.pyqtSignal()
+    new_bme280_sgl = qtc.pyqtSignal()
     new_publisher_sgl = qtc.pyqtSignal()
     new_set_params_sgl = qtc.pyqtSignal()
 
@@ -54,11 +55,12 @@ class RosQtBridge(qtw.QWidget):
         super().__init__()
         # Variables to transfer data between ROS and Qt
         self.input_state_msg = None
-        self.cam_front_msg = None 
-        self.cam_claw_msg = None
-        self.cam_top_msg = None
+        self.cam_down_msg = None 
+        self.cam_back_msg = None
+        self.cam_front_msg = None
         self.com = [0.0] * 3
         self.debug_msg = None
+        self.bme280_msg = None
         self.keystroke_pub = None
         self.pilot_input_set_params = None
 
@@ -74,6 +76,30 @@ class RosQtBridge(qtw.QWidget):
         self.input_state_msg = msg
         self.new_input_state_msg_sgl.emit()
 
+    def callback_cam_down(self, msg: Image):
+        """
+        Called for each time a message is published to the `camera/down/h264` topic.
+        Collects the contents of the message sent and emits a `new_cam_down_msg_sgl`
+        signal which is received by Qt.
+
+        Args:
+            msg: Message of type `Image` from the `camera/down/h264` topic.
+        """
+        self.cam_down_msg = msg
+        self.new_cam_down_msg_sgl.emit()
+
+    def callback_cam_back(self, msg: Image):
+        """
+        Called for each time a message is published to the `camera/back/h264` topic.
+        Collects the contents of the message sent and emits a `new_cam_back_msg_sgl`
+        signal which is received by Qt.
+
+        Args:
+            msg: Message of type `Image` from the `camera/back/h264` topic.
+        """
+        self.cam_back_msg = msg
+        self.new_cam_back_msg_sgl.emit()
+
     def callback_cam_front(self, msg: Image):
         """
         Called for each time a message is published to the `camera/front/h264` topic.
@@ -81,34 +107,10 @@ class RosQtBridge(qtw.QWidget):
         signal which is received by Qt.
 
         Args:
-            msg: Message of type `Image` from the `camera/front/h264` topic.
+            msg: Message of type `Image` from the `camera/front/h264` topic
         """
         self.cam_front_msg = msg
         self.new_cam_front_msg_sgl.emit()
-
-    def callback_cam_claw(self, msg: Image):
-        """
-        Called for each time a message is published to the `camera/claw/h264` topic.
-        Collects the contents of the message sent and emits a `new_cam_claw_msg_sgl`
-        signal which is received by Qt.
-
-        Args:
-            msg: Message of type `Image` from the `camera/claw/h264` topic.
-        """
-        self.cam_claw_msg = msg
-        self.new_cam_claw_msg_sgl.emit()
-
-    def callback_cam_top(self, msg: Image):
-        """
-        Called for each time a message is published to the `camera/top/h264` topic.
-        Collects the contents of the message sent and emits a `new_cam_top_msg_sgl`
-        signal which is received by Qt.
-
-        Args:
-            msg: Message of type `Image` from the `camera/top/h264` topic
-        """
-        self.cam_top_msg = msg
-        self.new_cam_top_msg_sgl.emit()
     
     def callback_param_event(self, msg: ParameterEvent):
         """
@@ -138,6 +140,18 @@ class RosQtBridge(qtw.QWidget):
         """
         self.debug_msg = msg
         self.new_debug_sgl.emit()
+    
+    def callback_bme280(self, msg: Bme280):
+        """
+        Called for each time a message is published to the `bme280` topic.
+        Collects the contents of the message sent and emits a `new_bme280_sgl`
+        signal which is received by Qt.
+
+        Args:
+            msg: Message of type `Bme280` from the `bme280` topic
+        """
+        self.bme280_msg = msg
+        self.new_bme280_sgl.emit()
 
     def add_publisher(self, pub: Publisher):
         """
@@ -270,6 +284,13 @@ class MainWindow(qtw.QMainWindow):
             increment = [0.0 if i != ord(self.com_choice) - 88 else 0.01 if data in {"+", "="} else -0.01 for i in range(3)]
             self.thrust_set_params.update_params("center_of_mass_increment", increment)
             self.thrust_set_params.send_params()
+        
+        if data == "C":
+            self.thrust_set_params.update_params("center_of_mass_increment", [0.01, 0.0, 0.0])
+            self.thrust_set_params.send_params()
+        elif data == "V":
+            self.thrust_set_params.update_params("center_of_mass_increment", [-0.01, 0.0, 0.0])
+            self.thrust_set_params.send_params()
 
         # Change colors mode between light and dark mode
         if data == "0":
@@ -288,6 +309,7 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.turn_bank_indicator_widget.set_colors(self.colors)
         self.tab_widget.countdown_widget.set_colors(self.colors)
         self.tab_widget.term_widget.set_colors(self.colors)
+        self.tab_widget.leak.set_colors(self.colors)
         self.tab_widget.humidity.set_colors(self.colors)
         self.tab_widget.barometric_pressure.set_colors(self.colors)
         self.tab_widget.ambient_temperature.set_colors(self.colors)
@@ -296,7 +318,7 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.cpu_temperature.set_colors(self.colors)
         self.tab_widget.net_sent.set_colors(self.colors)
         self.tab_widget.net_recv.set_colors(self.colors)
-        
+
 
 class TabWidget(qtw.QWidget):
     """
@@ -327,10 +349,11 @@ class TabWidget(qtw.QWidget):
         self.ros_qt_bridge = ros_qt_bridge
         # Connect signals to slots for thread safe communication between ROS and Qt
         self.ros_qt_bridge.new_input_state_msg_sgl.connect(self.update_pilot_tab_input_states)
+        self.ros_qt_bridge.new_cam_down_msg_sgl.connect(self.update_cam_down)
+        self.ros_qt_bridge.new_cam_back_msg_sgl.connect(self.update_cam_back)
         self.ros_qt_bridge.new_cam_front_msg_sgl.connect(self.update_cam_front)
-        self.ros_qt_bridge.new_cam_claw_msg_sgl.connect(self.update_cam_claw)
-        self.ros_qt_bridge.new_cam_top_msg_sgl.connect(self.update_cam_top)
         self.ros_qt_bridge.new_debug_sgl.connect(self.update_debug)
+        self.ros_qt_bridge.new_bme280_sgl.connect(self.update_bme280)
     
         # Define layout of tabs
         layout = qtw.QVBoxLayout(self)
@@ -340,7 +363,8 @@ class TabWidget(qtw.QWidget):
         tabs = qtw.QTabWidget()
         tabs.currentChanged.connect(self.tab_changed)
         
-        # Start debug as not open
+        # Tabs open
+        self.pilot_open = True
         self.debug_open = False
 
         # Create a dict in which the key is the provided name of the tab, and the value is a qtw.QWidget() object
@@ -383,9 +407,9 @@ class TabWidget(qtw.QWidget):
             - Depth:            Displays the depth reading
             - IMU:              Displays the IMU readings as a turn/bank indicator (graphic to help keep constant acceleration)
             - Countdown:        Displays a countdown
+            - Down camera       Displays video feed from down camera
+            - back camera       Displays video feed from back camera
             - Front camera      Displays video feed from front camera
-            - Claw camera       Displays video feed from claw camera
-            - Top camera        Displays video feed from top camera
             - Product demo map  Displays a static image of the product demo area map
         
         Args: 
@@ -417,9 +441,9 @@ class TabWidget(qtw.QWidget):
         vert_widgets_layout.addWidget(self.countdown_widget, stretch=20)
 
         # Setup cameras
+        self.cam_down = VideoFrame()
+        self.cam_back = VideoFrame()
         self.cam_front = VideoFrame()
-        self.cam_claw = VideoFrame()
-        self.cam_top = VideoFrame()
         
         # Product demo map image
         self.demo_map = qtw.QLabel()
@@ -432,9 +456,10 @@ class TabWidget(qtw.QWidget):
 
         # (0, 0)    (0, 1)
         # (1, 0)    (1, 1)
-        cam_layout.addWidget(self.cam_front.label, 0, 0)
-        cam_layout.addWidget(self.cam_claw.label, 0, 1)
-        cam_layout.addWidget(self.cam_top.label, 1, 0)
+        
+        cam_layout.addWidget(self.cam_back.label, 0, 0)
+        cam_layout.addWidget(self.cam_front.label, 0, 1)
+        cam_layout.addWidget(self.cam_down.label, 1, 0)
         cam_layout.addWidget(self.demo_map, 1, 1)
 
         home_window_layout.addLayout(vert_widgets_layout, stretch=1)
@@ -453,7 +478,8 @@ class TabWidget(qtw.QWidget):
             if i == index:
                 tab.setFocus()
 
-        # Set if the tab is open to debug
+        # Track states of tabs
+        self.pilot_open = index == 0
         self.debug_open = index == 2
 
     @staticmethod
@@ -480,25 +506,28 @@ class TabWidget(qtw.QWidget):
         video_frame.label.setPixmap(qtg.QPixmap(frame))
 
     @qtc.pyqtSlot()
+    def update_cam_down(self):
+        """
+        Slot which updates down camera image on the dashboard.
+        """
+        if self.pilot_open:
+            TabWidget.update_cam_img(self.ros_qt_bridge.cam_down_msg, self.cam_down)
+    
+    @qtc.pyqtSlot()
+    def update_cam_back(self):
+        """
+        Slot which updates back camera image on the dashboard.
+        """
+        if self.pilot_open:
+            TabWidget.update_cam_img(self.ros_qt_bridge.cam_back_msg, self.cam_back)
+    
+    @qtc.pyqtSlot()
     def update_cam_front(self):
         """
-        Slot which updates front camera image on the dashboard.
+        Slot which updates front image on the dashboard.
         """
-        TabWidget.update_cam_img(self.ros_qt_bridge.cam_front_msg, self.cam_front)
-    
-    @qtc.pyqtSlot()
-    def update_cam_claw(self):
-        """
-        Slot which updates claw camera image on the dashboard.
-        """     
-        TabWidget.update_cam_img(self.ros_qt_bridge.cam_claw_msg, self.cam_claw)
-    
-    @qtc.pyqtSlot()
-    def update_cam_top(self):
-        """
-        Slot which updates front top image on the dashboard.
-        """
-        TabWidget.update_cam_img(self.ros_qt_bridge.cam_top_msg, self.cam_top)
+        if self.pilot_open:
+            TabWidget.update_cam_img(self.ros_qt_bridge.cam_front_msg, self.cam_front)
 
     @qtc.pyqtSlot()
     def update_pilot_tab_input_states(self):
@@ -524,9 +553,9 @@ class TabWidget(qtw.QWidget):
         term_layout = qtw.QVBoxLayout()
 
         self.leak = NumericDataWidget(tab, "Leak Status", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.humidity = NumericDataWidget(tab, "Humidity", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.barometric_pressure = NumericDataWidget(tab, "Barometric Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.ambient_temperature = NumericDataWidget(tab, "Ambient Temp", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.humidity = NumericDataWidget(tab, "Humidity (%)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.barometric_pressure = NumericDataWidget(tab, "Pressure (atm)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.ambient_temperature = NumericDataWidget(tab, "Ambient Temp (°F)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         
         info_layout.addWidget(self.leak)
         info_layout.addWidget(self.humidity)
@@ -557,20 +586,30 @@ class TabWidget(qtw.QWidget):
 
     @qtc.pyqtSlot()
     def update_debug(self):
+        msg = self.ros_qt_bridge.debug_msg
+        # Update display if the tab is open
         if self.debug_open:
-            msg = self.ros_qt_bridge.debug_msg
             self.cpu_usage.update(msg.time, msg.cpu_usage)
             self.memory_usage.update(msg.time, msg.memory_usage)
             self.cpu_temperature.update(msg.time, msg.cpu_temperature)
-            self.net_sent.update(msg.time, msg.net_sent / 1000000)  # Convert to megabyte
-            self.net_recv.update(msg.time, msg.net_recv / 1000)     # Convert to kilobyte
+            self.net_sent.update(msg.time, msg.net_sent / 1000000)  # Convert bytes to megabyte
+            self.net_recv.update(msg.time, msg.net_recv / 1000)     # Convert bytes to kilobyte
+        # If the tab is not open, store the data
+        else:
+            self.cpu_usage.append(msg.time, msg.cpu_usage)
+            self.memory_usage.append(msg.time, msg.memory_usage)
+            self.cpu_temperature.append(msg.time, msg.cpu_temperature)
+            self.net_sent.append(msg.time, msg.net_sent / 1000000)  # Convert bytes to megabyte
+            self.net_recv.append(msg.time, msg.net_recv / 1000)     # Convert bytes to kilobyte
 
     @qtc.pyqtSlot()
     def update_bme280(self):
         if self.debug_open:
-            pass
-            # TODO: Do stuff (it would be cool)
-            # This is not connected
+            msg = self.ros_qt_bridge.bme280_msg
+            self.humidity.update(msg.humidity)
+            self.barometric_pressure.update(msg.pressure * 0.001315)        # Convert torr to atm
+            self.ambient_temperature.update(msg.temperature * 9 / 5 + 32)   # Convert C to F
+
 
 class Dash(Node):
     """
@@ -588,9 +627,10 @@ class Dash(Node):
 
         self.create_subscription(InputStates, "input_states", ros_qt_bridge.callback_input_states, 10)        
         self.create_subscription(DebugInfo, "debug_info", ros_qt_bridge.callback_debug, 10)
+        self.create_subscription(Bme280, "bme280", ros_qt_bridge.callback_bme280, 10)
+        self.create_subscription(Image, "camera/down/image", ros_qt_bridge.callback_cam_down, 10)
+        self.create_subscription(Image, "camera/back/image", ros_qt_bridge.callback_cam_back, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
-        self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
-        self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.callback_param_event, 10)
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))

@@ -9,18 +9,9 @@ from launch.substitutions import FindExecutable
 from launch.event_handlers import OnShutdown
 
 # Camera paths
-claw_camera_path    = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1:1.0-video-index2'
-top_camera_path     = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2:1.0-video-index2'
-front_camera_path   = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.3:1.0-video-index2'
-
-# v4l2_devices = subprocess.run("v4l2-ctl --list-devices", shell=True, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
-# if m := re.search(r"mmal.*\n\s*(/dev/video\d)", v4l2_devices) is not None:
-#     front_camera_path = m.group(1)
-#     subprocess.run(f'v4l2-ctl --set-ctrl h264_i_frame_period=90 -d {front_camera_path}', shell=True, check=True)
-#     subprocess.run(f'v4l2-ctl --set-ctrl repeat_sequence_header=1 -d {front_camera_path}', shell=True, check=True)
-# else:
-#     print("Front camera not found!")
-#     front_camera_path = None
+back_camera_path    = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1:1.0-video-index2'
+front_camera_path     = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2:1.0-video-index2'
+down_camera_path   = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.3:1.0-video-index2'
 
 microros_serial_device = "/dev/ttyS0"
 subprocess.run('sudo /usr/local/bin/openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program pico/seahawk.elf verify reset exit"',
@@ -28,28 +19,86 @@ subprocess.run('sudo /usr/local/bin/openocd -f interface/raspberrypi-swd.cfg -f 
                 check=True)
 
 def generate_launch_description():
+    respawn_time = 0
     nodes = [
         Node(
             package='seahawk',
             executable='debug',
             name='debug',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time
         ),
         Node(
             package='seahawk',
             executable='claws',
             name='claws',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time
         ),
         Node(
             package='seahawk',
-            executable='spinny_thing',
-            name='spinny_thing',
-            output='screen'
+            executable='i2c',
+            name='i2c',
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time
         ),
     ]
 
-    if front_camera_path is not None and pathlib.Path(front_camera_path).exists():
+    if down_camera_path is not None and pathlib.Path(down_camera_path).exists():
+        nodes.append(
+            Node(
+                package='h264_image_transport',
+                executable='h264_cam_node',
+                name='down_camera',
+                output='both',
+                respawn=True,
+                respawn_delay=respawn_time,
+                parameters=[{
+                    'input_fn': str(pathlib.Path(down_camera_path).resolve()),
+                    'fps': 30,
+                    'size': '640x480',
+                    'frame_id': 'down_camera',
+                    'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
+                    'qos_overrides./parameter_events.publisher.history': 'keep_last',
+                    'qos_overrides./parameters_events.publisher.durability': 'volatile',
+                    'qos_overrides./parameter_events.publisher.depth': 1,
+                }],
+                remappings=[
+                    ('image_raw/h264', 'camera/down/h264'),
+                ],
+            ),
+        )
+
+    if pathlib.Path(back_camera_path).exists():
+        nodes.append(
+            Node(
+                package='h264_image_transport',
+                executable='h264_cam_node',
+                name='back_camera',
+                output='both',
+                respawn=True,
+                respawn_delay=respawn_time,
+                parameters=[{
+                    'input_fn': str(pathlib.Path(back_camera_path).resolve()),
+                    'fps': 30,
+                    'size': '640x480',
+                    'frame_id': 'back_camera',
+                    'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
+                    'qos_overrides./parameter_events.publisher.history': 'keep_last',
+                    'qos_overrides./parameters_events.publisher.durability': 'volatile',
+                    'qos_overrides./parameter_events.publisher.depth': 1,
+                }],
+                remappings=[
+                    ('image_raw/h264', 'camera/back/h264'),
+                ],
+            ))
+    else:
+        print("back camera not found!")
+
+    if pathlib.Path(front_camera_path).exists():
         nodes.append(
             Node(
                 package='h264_image_transport',
@@ -57,7 +106,7 @@ def generate_launch_description():
                 name='front_camera',
                 output='both',
                 respawn=True,
-                respawn_delay=0,
+                respawn_delay=respawn_time,
                 parameters=[{
                     'input_fn': str(pathlib.Path(front_camera_path).resolve()),
                     'fps': 30,
@@ -70,61 +119,10 @@ def generate_launch_description():
                 }],
                 remappings=[
                     ('image_raw/h264', 'camera/front/h264'),
-                ],
-            ),
-        )
-
-    if pathlib.Path(claw_camera_path).exists():
-        nodes.append(
-            Node(
-                package='h264_image_transport',
-                executable='h264_cam_node',
-                name='claw_camera',
-                output='both',
-                respawn=True,
-                respawn_delay=0,
-                parameters=[{
-                    'input_fn': str(pathlib.Path(claw_camera_path).resolve()),
-                    'fps': 30,
-                    'size': '640x480',
-                    'frame_id': 'claw_camera',
-                    'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
-                    'qos_overrides./parameter_events.publisher.history': 'keep_last',
-                    'qos_overrides./parameters_events.publisher.durability': 'volatile',
-                    'qos_overrides./parameter_events.publisher.depth': 1,
-                }],
-                remappings=[
-                    ('image_raw/h264', 'camera/claw/h264'),
-                ],
-            ))
-    else:
-        print("Claw camera not found!")
-
-    if pathlib.Path(top_camera_path).exists():
-        nodes.append(
-            Node(
-                package='h264_image_transport',
-                executable='h264_cam_node',
-                name='top_camera',
-                output='both',
-                respawn=True,
-                respawn_delay=0,
-                parameters=[{
-                    'input_fn': str(pathlib.Path(top_camera_path).resolve()),
-                    'fps': 30,
-                    'size': '640x480',
-                    'frame_id': 'top_camera',
-                    'qos_overrides./parameter_events.publisher.reliability': 'best_effort',
-                    'qos_overrides./parameter_events.publisher.history': 'keep_last',
-                    'qos_overrides./parameters_events.publisher.durability': 'volatile',
-                    'qos_overrides./parameter_events.publisher.depth': 1,
-                }],
-                remappings=[
-                    ('image_raw/h264', 'camera/top/h264'),
                 ]
             ))
     else:
-        print("Top camera not found!")
+        print("front camera not found!")
 
     if microros_serial_device is not None and pathlib.Path(microros_serial_device).exists():
         nodes.append(
@@ -142,6 +140,8 @@ def generate_launch_description():
                 shell=True,
                 name="micro-ros-agent",
                 output='both',
+                respawn=True,
+                respawn_delay=respawn_time
             ),
         )
 

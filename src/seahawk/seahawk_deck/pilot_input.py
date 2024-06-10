@@ -103,18 +103,18 @@ class PilotInput(Node):
         self.add_on_set_parameters_callback(self.update_key_stroke)
         # Variable of type string for storing hot keys for throttle curves
         self.key_input = self.get_parameter("throttle_curve_choice").value
-
+        
+        # For resetting the CoM with the reset button
         self.set_thrust_params = SetRemoteParams(self, "thrust")
-        self.prev_com = 0
 
         # Button mapping
         self.buttons = {
             # "" :              StickyButton(),     # left_stick_press
             # "" :              StickyButton(),     # right_stick_press
-            "claw_2" :          StickyButton(),     # a
+            "back_claw" :       StickyButton(),     # a
             "bambi_mode":       StickyButton(),     # b
-            "main_claw":        StickyButton(),     # x
-            "claw_1":           StickyButton(),     # y
+            "toggle_claw":      StickyButton(),     # x
+            "articulate_claw":  StickyButton(),     # y
             "kill":             StickyButton(),     # window
             "reverse":          StickyButton(),     # menu
         }
@@ -186,14 +186,13 @@ class PilotInput(Node):
             "neg_linear_z":     joy_msg.axes[2],                # left_trigger
             "pos_linear_z":     joy_msg.axes[5],                # right_trigger
             # Dpad
-            "com_shift":        int(joy_msg.axes[7]),           # dpad_up (1.0) /down (-1.0)
-            # "":               int(max(joy_msg.axes[6], 0)),   # dpad_left  (used for spinny thing)
-            # "":               int(-min(joy_msg.axes[6], 0)),  # dpad_right (used for spinny thing)
+            # "":               joy_msg.axes[7],                # dpad up/dowm (used for tilty thing)
+            # "":               joy_msg.axes[6]                 # dpad_left/right  (used for spinny thing)
             # Buttons
-            "claw_2":           joy_msg.buttons[0], # a
+            "back_claw":        joy_msg.buttons[0], # a
             "bambi_mode":       joy_msg.buttons[1], # b
-            "main_claw":        joy_msg.buttons[2], # x
-            "claw_1":           joy_msg.buttons[3], # y
+            "toggle_claw":      joy_msg.buttons[2], # x
+            "articulate_claw":  joy_msg.buttons[3], # y
             "pos_angular_x":    joy_msg.buttons[4], # left_bumper
             "neg_angular_x":    joy_msg.buttons[5], # right_bumper
             "kill":             joy_msg.buttons[6], # window
@@ -240,9 +239,9 @@ class PilotInput(Node):
 
         # Create claw message
         claw_msg = ClawStates()
-        claw_msg.main_claw = self.buttons["main_claw"].check_state(controller["main_claw"])
-        claw_msg.claw_1    = self.buttons["claw_1"].check_state(controller["claw_1"])
-        claw_msg.claw_2    = self.buttons["claw_2"].check_state(controller["claw_2"])
+        claw_msg.toggle_claw        = self.buttons["toggle_claw"].check_state(controller["toggle_claw"])
+        claw_msg.articulate_claw    = self.buttons["articulate_claw"].check_state(controller["articulate_claw"])
+        claw_msg.back_claw          = self.buttons["back_claw"].check_state(controller["back_claw"])
 
         # Publish claw message
         self.claw_pub.publish(claw_msg)
@@ -255,11 +254,6 @@ class PilotInput(Node):
         input_states_msg.thrt_crv       = self.key_input
         self.input_states_pub.publish(input_states_msg)
 
-        # CoM shift: dpad up/down modifies linear CoM shift along orig CoM to claw
-        if (com_shift:=controller["com_shift"]):            
-            self.set_thrust_params.update_params("center_of_mass_increment", [0.005 * com_shift, 0.0, 0.0])
-            self.set_thrust_params.send_params()
-    
         # If the x-box button is pressed, all settings get reset to default configurations
         if controller["reset"]:
             self.buttons["bambi_mode"].reset()
