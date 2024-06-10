@@ -41,20 +41,23 @@ class Claws(Node):
         """
         super().__init__("claws")
 
+        # Clean up GPIOs incase unclean shutdown
+        GPIO.cleanup()
+
         # Map claw names to GPIO pins
         self.claw_pins = {
-            "main_claw":    18,
-            "claw_1":       23,
-            "claw_2":       12,
+            "toggle_claw":      18,
+            "articulate_claw":  23,
+            "back_claw":        12,
         }
         self.bool_to_mode = {True: GPIO.HIGH, False: GPIO.LOW}
         
         GPIO.setmode(GPIO.BCM)
 
         # Set claw GPIO pins to out
-        GPIO.setup(self.claw_pins["main_claw"], GPIO.OUT)
-        GPIO.setup(self.claw_pins["claw_1"],    GPIO.OUT)
-        GPIO.setup(self.claw_pins["claw_2"],    GPIO.OUT)
+        GPIO.setup(self.claw_pins["toggle_claw"], GPIO.OUT)
+        GPIO.setup(self.claw_pins["articulate_claw"],    GPIO.OUT)
+        GPIO.setup(self.claw_pins["back_claw"],    GPIO.OUT)
 
         self.create_subscription(ClawStates, "claws", self.callback, 10)
 
@@ -65,9 +68,9 @@ class Claws(Node):
         Args:
             claw_msg: Message of type 'Claws' from the claws topic
         """
-        GPIO.output(self.claw_pins["main_claw"], self.bool_to_mode[claw_msg.main_claw])
-        GPIO.output(self.claw_pins["claw_1"], self.bool_to_mode[claw_msg.claw_1])
-        GPIO.output(self.claw_pins["claw_2"], self.bool_to_mode[claw_msg.claw_2])
+        GPIO.output(self.claw_pins["toggle_claw"], self.bool_to_mode[claw_msg.toggle_claw])
+        GPIO.output(self.claw_pins["articulate_claw"], self.bool_to_mode[claw_msg.articulate_claw])
+        GPIO.output(self.claw_pins["back_claw"], self.bool_to_mode[claw_msg.back_claw])
 
     def __del__(self):
         """

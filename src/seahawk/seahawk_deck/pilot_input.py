@@ -111,10 +111,10 @@ class PilotInput(Node):
         self.buttons = {
             # "" :              StickyButton(),     # left_stick_press
             # "" :              StickyButton(),     # right_stick_press
-            "claw_2" :          StickyButton(),     # a
+            "back_claw" :       StickyButton(),     # a
             "bambi_mode":       StickyButton(),     # b
-            "main_claw":        StickyButton(),     # x
-            "claw_1":           StickyButton(),     # y
+            "toggle_claw":      StickyButton(),     # x
+            "articulate_claw":  StickyButton(),     # y
             "kill":             StickyButton(),     # window
             "reverse":          StickyButton(),     # menu
         }
@@ -189,10 +189,10 @@ class PilotInput(Node):
             # "":               joy_msg.axes[7],                # dpad up/dowm (used for tilty thing)
             # "":               joy_msg.axes[6]                 # dpad_left/right  (used for spinny thing)
             # Buttons
-            "claw_2":           joy_msg.buttons[0], # a
+            "back_claw":        joy_msg.buttons[0], # a
             "bambi_mode":       joy_msg.buttons[1], # b
-            "main_claw":        joy_msg.buttons[2], # x
-            "claw_1":           joy_msg.buttons[3], # y
+            "toggle_claw":      joy_msg.buttons[2], # x
+            "articulate_claw":  joy_msg.buttons[3], # y
             "pos_angular_x":    joy_msg.buttons[4], # left_bumper
             "neg_angular_x":    joy_msg.buttons[5], # right_bumper
             "kill":             joy_msg.buttons[6], # window
@@ -239,9 +239,9 @@ class PilotInput(Node):
 
         # Create claw message
         claw_msg = ClawStates()
-        claw_msg.main_claw = self.buttons["main_claw"].check_state(controller["main_claw"])
-        claw_msg.claw_1    = self.buttons["claw_1"].check_state(controller["claw_1"])
-        claw_msg.claw_2    = self.buttons["claw_2"].check_state(controller["claw_2"])
+        claw_msg.toggle_claw        = self.buttons["toggle_claw"].check_state(controller["toggle_claw"])
+        claw_msg.articulate_claw    = self.buttons["articulate_claw"].check_state(controller["articulate_claw"])
+        claw_msg.back_claw          = self.buttons["back_claw"].check_state(controller["back_claw"])
 
         # Publish claw message
         self.claw_pub.publish(claw_msg)
