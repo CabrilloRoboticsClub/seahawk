@@ -103,6 +103,9 @@ class ImuWidget(qtw.QWidget):
 
         self._init_ui()
 
+        # Apply css styling
+        self.set_colors(colors)
+
         # TODO: load a style sheet (should be a param to init), see other widgets for example
 
     def _init_ui(self):
