@@ -91,8 +91,11 @@ class ImuWidget(qtw.QWidget):
     inherits from the 'qtw.QWidget' class.
     """
 
-    def __init__(self, parent: qtw.QWidget, colors):
+    def __init__(self, parent: qtw.QWidget, style_sheet_file: str, colors: dict):
         super().__init__(parent)
+
+        with open(style_sheet_file) as style_sheet:
+            self.style_sheet = style_sheet.read()
 
         self.linear_accel_x = None
         self.linear_accel_y = None
@@ -118,13 +121,19 @@ class ImuWidget(qtw.QWidget):
         self.paint_widget = PaintWidget()
         self.layout_inner.addWidget(self.paint_widget)
 
-
     def update(self, imu_data):
         self.linear_accel_x = 50*imu_data.linear_acceleration.x  # probably redundant
         self.linear_accel_y = 50*imu_data.linear_acceleration.y
         self.linear_accel_z = 50*imu_data.linear_acceleration.z
 
         self.paint_widget.create_vector(self.linear_accel_x, self.linear_accel_y, self.linear_accel_z)
-    
-    # TODO: need a set_colors() function. see other widgets for an example
+
+    def set_colors(self, new_colors: dict):
+        """
+        Sets widget colors given a dictionary of hex color codes.
+
+        Args:
+            new_colors: Hex codes to color widget with.
+        """
+        self.setStyleSheet(self.style_sheet.format(**new_colors))
 
