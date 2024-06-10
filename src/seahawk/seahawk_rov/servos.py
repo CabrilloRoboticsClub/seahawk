@@ -53,9 +53,8 @@ class Servo(Node):
         self.PIN_TILTY = 13
 
         GPIO.setup(self.PIN_TILTY, GPIO.OUT)
-        self.pwm_tilty = GPIO.PWM(self.PIN_TILTY, 100)  # 100 is a placeholder number for now
+        self.pwm_tilty = GPIO.PWM(self.PIN_TILTY, 50)  # is 50hZ good?
         self.pwm_tilty.start(0)
-
 
         self.create_subscription(Joy, "joy", self.callback, 10)
 
