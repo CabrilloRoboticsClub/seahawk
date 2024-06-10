@@ -30,7 +30,7 @@ from sensor_msgs.msg import Joy
 import time
 
 
-class SpinnyThing(Node):
+class Servo(Node):
     """
     Class which spins the spinny thing (dpad left & right) & tilty thing (dpad up & down)
     """
