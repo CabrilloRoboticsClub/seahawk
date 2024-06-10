@@ -19,24 +19,31 @@ subprocess.run('sudo /usr/local/bin/openocd -f interface/raspberrypi-swd.cfg -f 
                 check=True)
 
 def generate_launch_description():
+    respawn_time = 0
     nodes = [
         Node(
             package='seahawk',
             executable='debug',
             name='debug',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time
         ),
         Node(
             package='seahawk',
             executable='claws',
             name='claws',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time
         ),
         Node(
             package='seahawk',
             executable='i2c',
             name='i2c',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time
         ),
     ]
 
@@ -48,7 +55,7 @@ def generate_launch_description():
                 name='down_camera',
                 output='both',
                 respawn=True,
-                respawn_delay=0,
+                respawn_delay=respawn_time,
                 parameters=[{
                     'input_fn': str(pathlib.Path(down_camera_path).resolve()),
                     'fps': 30,
@@ -73,7 +80,7 @@ def generate_launch_description():
                 name='back_camera',
                 output='both',
                 respawn=True,
-                respawn_delay=0,
+                respawn_delay=respawn_time,
                 parameters=[{
                     'input_fn': str(pathlib.Path(back_camera_path).resolve()),
                     'fps': 30,
@@ -99,7 +106,7 @@ def generate_launch_description():
                 name='front_camera',
                 output='both',
                 respawn=True,
-                respawn_delay=0,
+                respawn_delay=respawn_time,
                 parameters=[{
                     'input_fn': str(pathlib.Path(front_camera_path).resolve()),
                     'fps': 30,
@@ -133,6 +140,8 @@ def generate_launch_description():
                 shell=True,
                 name="micro-ros-agent",
                 output='both',
+                respawn=True,
+                respawn_delay=respawn_time
             ),
         )
 
