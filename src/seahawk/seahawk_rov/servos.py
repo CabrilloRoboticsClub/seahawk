@@ -80,9 +80,9 @@ class Servo(Node):
 
         dpad = -int(msg.axes[7])  # dpad settings are up and down for the tilty thing
         if dpad == 1:
-            self.pwm_tilty.ChangeDutyCycle(self.CLOCKWISE_TILTY)
-        elif dpad == -1:
             self.pwm_tilty.ChangeDutyCycle(self.COUNTERCLOCKWISE_TILTY)
+        elif dpad == -1:
+            self.pwm_tilty.ChangeDutyCycle(self.CLOCKWISE_TILTY)
         else:
             self.pwm_tilty.ChangeDutyCycle(0)
         
