@@ -92,7 +92,7 @@ class Servo(Node):
 
 
     def moveTiltyThing(self, angle):
-        self.angle_to_duty = (angle / self.tilty_max) + self.tilty_min
+        self.angle_to_duty = (angle/180)(self.tilty_max - self.tilty_min) + self.tilty_min
         return self.pwm_tilty.ChangeDutyCycle(self.angle_to_duty)
 
 
