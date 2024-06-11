@@ -41,11 +41,12 @@ class Servo(Node):
         """
         super().__init__("servos")
 
+        GPIO.setmode(GPIO.BCM)
+
         self.PIN_SPINNY = 19
         self.CLOCKWISE_SPINNY = 3
         self.COUNTERCLOCKWISE_SPINNY = 10 
 
-        GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.PIN_SPINNY, GPIO.OUT)
         self.pwm_spinny = GPIO.PWM(self.PIN_SPINNY, 50)
         self.pwm_spinny.start(0)
@@ -56,7 +57,7 @@ class Servo(Node):
         # self.angle = 1  # TODO: dummy variable rn
 
         GPIO.setup(self.PIN_TILTY, GPIO.OUT)
-        self.pwm_tilty = GPIO.PWM(self.PIN_TILTY, 50)  # TODO: what is the PWM range for this mf??
+        self.pwm_tilty = GPIO.PWM(self.PIN_TILTY, 50)
         self.pwm_tilty.start(0)
 
         self.create_subscription(Joy, "joy", self.callback, 10)
