@@ -51,8 +51,9 @@ class Servo(Node):
         self.pwm_spinny.start(0)
 
         self.PIN_TILTY = 13
-        self.tilty_max = 10  # TODO: dummy variable rn
-        self.tilty_min = 0  # TODO: dummy variable rn
+        self.tilty_duty_offset = 0.5
+        self.tilty_max_duty = 12.5 + self.tilty_duty_offset  # TODO: dummy variable rn
+        self.tilty_min_duty = 2.5 + self.tilty_duty_offset # TODO: dummy variable rn
         self.angle = 1  # TODO: dummy variable rn
 
         GPIO.setup(self.PIN_TILTY, GPIO.OUT)
@@ -80,19 +81,24 @@ class Servo(Node):
         dpad = -int(msg.axes[7])  # dpad settings are up and down for the tilty thing
         if dpad == 1:  # move the tilty thing upwards
             self.angle += 1
+            
+            if self.angle > 180:
+                self.angle = 180
+            
             self.moveTiltyThing(self.angle)
         elif dpad == -1:  # move the tilty thing downwards
-            if self.angle > 0:
-                self.angle -= 1
-            else:
-                pass
+            self.angle -= 1
+
+            if self.angle < 0:
+                self.angle = 0
+            
             self.moveTiltyThing(self.angle)
         else:
             self.moveTiltyThing(0)
 
 
     def moveTiltyThing(self, angle):
-        self.angle_to_duty = (angle/180)(self.tilty_max - self.tilty_min) + self.tilty_min
+        self.angle_to_duty = (angle/180)(self.tilty_max_duty - self.tilty_min_duty) + self.tilty_min_duty
         return self.pwm_tilty.ChangeDutyCycle(self.angle_to_duty)
 
 
