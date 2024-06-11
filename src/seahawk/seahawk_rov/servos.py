@@ -42,8 +42,8 @@ class Servo(Node):
         super().__init__("servos")
 
         self.PIN_SPINNY = 19
-        self.CLOCKWISE = 3
-        self.COUNTERCLOCKWISE = 10 
+        self.CLOCKWISE_SPINNY = 3
+        self.COUNTERCLOCKWISE_SPINNY = 10 
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.PIN_SPINNY, GPIO.OUT)
@@ -51,10 +51,9 @@ class Servo(Node):
         self.pwm_spinny.start(0)
 
         self.PIN_TILTY = 13
-        self.tilty_duty_offset = 0.5
-        self.tilty_max_duty = 12.5 + self.tilty_duty_offset  # TODO: dummy variable rn
-        self.tilty_min_duty = 2.5 + self.tilty_duty_offset # TODO: dummy variable rn
-        self.angle = 1  # TODO: dummy variable rn
+        self.CLOCKWISE_TILTY = 12.5
+        self.COUNTERCLOCKWISE_TILTY = 2.5
+        # self.angle = 1  # TODO: dummy variable rn
 
         GPIO.setup(self.PIN_TILTY, GPIO.OUT)
         self.pwm_tilty = GPIO.PWM(self.PIN_TILTY, 50)  # TODO: what is the PWM range for this mf??
@@ -71,35 +70,42 @@ class Servo(Node):
 
         dpad = -int(msg.axes[6])  # dpad settings are left and right for the spinny thing
         if dpad == 1:
-            self.pwm_spinny.ChangeDutyCycle(self.CLOCKWISE)
+            self.pwm_spinny.ChangeDutyCycle(self.CLOCKWISE_SPINNY)
         elif dpad == -1:
-            self.pwm_spinny.ChangeDutyCycle(self.COUNTERCLOCKWISE)
+            self.pwm_spinny.ChangeDutyCycle(self.COUNTERCLOCKWISE_SPINNY)
         else:
             self.pwm_spinny.ChangeDutyCycle(0)
 
 
         dpad = -int(msg.axes[7])  # dpad settings are up and down for the tilty thing
-        if dpad == 1:  # move the tilty thing upwards
-            self.angle += 1
-            
-            if self.angle > 180:
-                self.angle = 180
-            
-            self.moveTiltyThing(self.angle)
-        elif dpad == -1:  # move the tilty thing downwards
-            self.angle -= 1
-
-            if self.angle < 0:
-                self.angle = 0
-            
-            self.moveTiltyThing(self.angle)
+        if dpad == 1:
+            self.pwm_tilty.ChangeDutyCycle(self.CLOCKWISE_TILTY)
+        elif dpad == -1:
+            self.pwm_tilty.ChangeDutyCycle(self.COUNTERCLOCKWISE_TILTY)
         else:
-            self.moveTiltyThing(0)
+            self.pwm_tilty.ChangeDutyCycle(0)
+        
+        # if dpad == 1:  # move the tilty thing upwards
+        #     self.angle += 1
+            
+        #     if self.angle > 180:
+        #         self.angle = 180
+            
+        #     self.moveTiltyThing(self.angle)
+        # elif dpad == -1:  # move the tilty thing downwards
+        #     self.angle -= 1
+
+        #     if self.angle < 0:
+        #         self.angle = 0
+            
+        #     self.moveTiltyThing(self.angle)
+        # else:
+        #     self.moveTiltyThing(0)
 
 
-    def moveTiltyThing(self, angle):
-        self.angle_to_duty = (angle/180)(self.tilty_max_duty - self.tilty_min_duty) + self.tilty_min_duty
-        return self.pwm_tilty.ChangeDutyCycle(self.angle_to_duty)
+    # def moveTiltyThing(self, angle):
+    #     self.angle_to_duty = (angle/180)(self.tilty_max_duty - self.tilty_min_duty) + self.tilty_min_duty
+    #     return self.pwm_tilty.ChangeDutyCycle(self.angle_to_duty)
 
 
     def __del__(self):
