@@ -32,6 +32,7 @@ setup(
     entry_points={
         'console_scripts': [
             "debug=seahawk_rov.debug:main",
+            "spinny_thing=seahawk_rov.spinny_thing:main",
             "claws=seahawk_rov.claws:main",
             "i2c=seahawk_rov.i2c:main",
             "thrust=seahawk_deck.thrust:main",
