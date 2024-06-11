@@ -7,8 +7,8 @@ class PaintWidget(qtw.QWidget):
 
     def __init__(self):
         super().__init__()
-        self.height = 420
-        self.width = 420
+        # self.height = 0
+        # self.width = 0
         self.scale_value = 30
         self.vector = QVector3D(0, 0, 0)  # set dummy values
 
@@ -33,11 +33,10 @@ class PaintWidget(qtw.QWidget):
     def paintEvent (self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.translate(self.width/2, self.height/2)
+        painter.translate(int(self.width()/2), int(self.height()/2))
         painter.scale(1, -1)
         pen = QPen(Qt.white, 3)
         painter.setPen(pen)
-
         
         # self.q_orange_up = QImage(self.orange_up)
         # self.q_orange_down = QImage(self.orange_down)
@@ -64,10 +63,10 @@ class PaintWidget(qtw.QWidget):
 
         pen = QPen(Qt.red, 3)
         painter.setPen(pen)
-        painter.drawLine(0, int(self.height), 0, -int(self.height))
-        painter.drawLine(int(self.width), 0, -int(self.width), 0)
-        painter.drawEllipse(-int(self.width/2), -int(self.height/2), self.width, self.height)
-        
+        painter.drawLine(0, int(self.height()), 0, -int(self.height()))
+        painter.drawLine(int(self.height()/2), 0, -int(self.height()/2), 0)
+        painter.drawEllipse(-int(self.height()/2), -int(self.height()/2), self.height(), self.height())
+
         # TODO: Good, but images should again be coming from colors dict
         # if int(self.vector.z()) < 0:
         #     painter.drawImage(55, 20, self.q_empty_up)
@@ -130,9 +129,9 @@ class ImuWidget(qtw.QWidget):
         self.layout_inner.addWidget(self.paint_widget)
 
     def update(self, imu_data):
-        self.linear_accel_x = 50*imu_data.linear_acceleration.x  # probably redundant
-        self.linear_accel_y = 50*imu_data.linear_acceleration.y
-        self.linear_accel_z = 50*imu_data.linear_acceleration.z
+        self.linear_accel_x = 100*imu_data.linear_acceleration.x  # probably redundant
+        self.linear_accel_y = 100*imu_data.linear_acceleration.y
+        self.linear_accel_z = 100*imu_data.linear_acceleration.z
 
         self.paint_widget.create_vector(self.linear_accel_x, self.linear_accel_y, self.linear_accel_z)
 
