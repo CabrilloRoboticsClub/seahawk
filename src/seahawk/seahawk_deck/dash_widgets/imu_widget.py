@@ -7,8 +7,6 @@ class PaintWidget(qtw.QWidget):
 
     def __init__(self):
         super().__init__()
-        # self.height = 0
-        # self.width = 0
         self.scale_value = 30
         self.vector = QVector3D(0, 0, 0)  # set dummy values
 
