@@ -78,18 +78,23 @@ class Servo(Node):
 
 
         dpad = -int(msg.axes[7])  # dpad settings are up and down for the tilty thing
-        if dpad == 1:
+        if dpad == 1:  # move the tilty thing upwards
             self.angle += 1
-            self.pwm_tilty.ChangeDutyCycle(self.moveTiltyThing(self.angle))
-        elif dpad == -1:
-            self.angle -= 1
-            self.pwm_tilty.ChangeDutyCycle(self.moveTiltyThing(self.angle))
+            self.moveTiltyThing(self.angle)
+        elif dpad == -1:  # move the tilty thing downwards
+            if self.angle > 0:
+                self.angle -= 1
+            else:
+                pass
+            self.moveTiltyThing(self.angle)
         else:
-            pass
-            # stay the same
+            self.moveTiltyThing(0)
+
 
     def moveTiltyThing(self, angle):
-        return (angle / self.tilty_max) + self.tilty_min
+        self.angle_to_duty = (angle / self.tilty_max) + self.tilty_min
+        return self.pwm_tilty.ChangeDutyCycle(self.angle_to_duty)
+
 
     def __del__(self):
         """
