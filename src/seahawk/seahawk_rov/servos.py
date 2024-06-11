@@ -51,9 +51,9 @@ class Servo(Node):
         self.pwm_spinny = GPIO.PWM(self.PIN_SPINNY, 50)
         self.pwm_spinny.start(0)
 
-        self.PIN_TILTY = 13
-        self.CLOCKWISE_TILTY = 12.5
-        self.COUNTERCLOCKWISE_TILTY = 2.5
+        self.PIN_TILTY = 5
+        self.CLOCKWISE_TILTY = 3
+        self.COUNTERCLOCKWISE_TILTY = 10
         # self.angle = 1  # TODO: dummy variable rn
 
         GPIO.setup(self.PIN_TILTY, GPIO.OUT)
