@@ -51,9 +51,12 @@ class Servo(Node):
         self.pwm_spinny.start(0)
 
         self.PIN_TILTY = 13
+        self.tilty_max = 10  # TODO: dummy variable rn
+        self.tilty_min = 0  # TODO: dummy variable rn
+        self.angle = 1  # TODO: dummy variable rn
 
         GPIO.setup(self.PIN_TILTY, GPIO.OUT)
-        self.pwm_tilty = GPIO.PWM(self.PIN_TILTY, 50)  # is 50hZ good?
+        self.pwm_tilty = GPIO.PWM(self.PIN_TILTY, 50)  # TODO: what is the PWM range for this mf??
         self.pwm_tilty.start(0)
 
         self.create_subscription(Joy, "joy", self.callback, 10)
@@ -76,14 +79,17 @@ class Servo(Node):
 
         dpad = -int(msg.axes[7])  # dpad settings are up and down for the tilty thing
         if dpad == 1:
-            pass
-            # tilt up
+            self.angle += 1
+            self.pwm_tilty.ChangeDutyCycle(self.moveUp(self.angle))
         elif dpad == -1:
-            pass
-            # tilt down
+            self.angle -= 1
+            self.pwm_tilty.ChangeDutyCycle(self.moveUp(self.angle))
         else:
             pass
             # stay the same
+
+    def moveTilyThing(self, angle):
+        return (angle / self.tilty_max) + self.tilty_min
 
     def __del__(self):
         """
