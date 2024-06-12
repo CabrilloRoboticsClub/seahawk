@@ -47,8 +47,8 @@ def generate_launch_description():
         ),
         Node(
             package='seahawk',
-            executable='spinny_thing',
-            name='spinny_thing',
+            executable='servo',
+            name='servo',
             output='screen',
             respawn=True,
             respawn_delay=respawn_time
