@@ -390,7 +390,7 @@ class TabWidget(qtw.QWidget):
         self.thrt_crv_widget = ThrtCrvWidget(tab, self.colors)
         self.turn_bank_indicator_widget = TurnBankIndicator(tab, PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.temp_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.depth_widget = NumericDataWidget(tab, "Depth", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.depth_widget = NumericDataWidget(tab, "Depth (m)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.pressure_sensor_widget = NumericDataWidget(tab, "Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.countdown_widget = CountdownWidget(tab, PATH + "/dash_styling/countdown_widget.txt", self.colors, minutes=15, seconds=0)
 
@@ -499,7 +499,7 @@ class TabWidget(qtw.QWidget):
 
     @qtc.pyqtSlot()
     def update_pressure_msg(self):
-        self.pressure_sensor_widget.update(self.ros_qt_bridge.pressure_msg)  # TODO: make sure to create pressure_sensor_widget
+        self.depth_widget.update(f"{((self.ros_qt_bridge.pressure_msg.depth / 1000) + 0.06):.3f}")  # Convert from mm to m, display to 3 decimal places
 
     def create_debug_tab(self, tab: qtw.QWidget):
         # Setup layouts
@@ -550,7 +550,7 @@ class Dash(Node):
         self.create_subscription(Image, "camera/claw/image", ros_qt_bridge.callback_cam_claw, 10)
         self.create_subscription(Image, "camera/top/image", ros_qt_bridge.callback_cam_top, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.param_event_callback, 10)
-        self.create_subscription(PressureSensor, "pressure_topic", ros_qt_bridge.pressure_callback, 10)
+        self.create_subscription(PressureSensor, "pressure", ros_qt_bridge.pressure_callback, 10)
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))
 
