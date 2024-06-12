@@ -555,7 +555,7 @@ class TabWidget(qtw.QWidget):
 
     @qtc.pyqtSlot()
     def update_pressure_msg(self):
-        self.depth_widget.update(f"{((self.ros_qt_bridge.pressure_msg.depth / 1000) + 0.06):.3f}")  # Convert from mm to m, display to 3 decimal places
+        self.depth_widget.update(self.ros_qt_bridge.pressure_msg.depth / 1000 + 0.06)  # Convert from mm to m, display to 3 decimal places
 
     def create_debug_tab(self, tab: qtw.QWidget):
         # Setup layouts
