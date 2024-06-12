@@ -25,13 +25,13 @@ setup(
     entry_points={
         'console_scripts': [
             "debug=seahawk_rov.debug:main",
+            "servo=seahawk_rov.servo:main",
             "claws=seahawk_rov.claws:main",
             "i2c=seahawk_rov.i2c:main",
             "thrust=seahawk_deck.thrust:main",
             "pilot_input=seahawk_deck.pilot_input:main",
             "rviz_markers=seahawk_deck.rviz_markers:main",
-            'seahawk_rov = seahawk_rov:main',
-            "dash=seahawk_deck.dash:main"
+            "dash=seahawk_deck.dash:main",  
         ],
     },
 )

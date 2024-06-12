@@ -20,7 +20,6 @@ from seahawk_deck.dash_widgets.countdown_widget import CountdownWidget
 from seahawk_deck.dash_widgets.numeric_data_widget import NumericDataWidget
 from seahawk_deck.dash_widgets.state_widget import StateWidget
 from seahawk_deck.dash_widgets.throttle_curve_widget import ThrtCrvWidget
-from seahawk_deck.dash_widgets.turn_bank_indicator_widget import TurnBankIndicator
 from seahawk_deck.dash_widgets.term_widget import TermWidget
 from seahawk_deck.set_remote_params import SetRemoteParams
 from seahawk_deck.dash_widgets.tri_numeric_data_widget import TriNumericDataWidget
@@ -319,7 +318,6 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.thrt_crv_widget.set_colors(self.colors)
         self.tab_widget.temp_widget.set_colors(self.colors)
         self.tab_widget.depth_widget.set_colors(self.colors)
-        self.tab_widget.turn_bank_indicator_widget.set_colors(self.colors)
         self.tab_widget.countdown_widget.set_colors(self.colors)
         self.tab_widget.term_widget.set_colors(self.colors)
         self.tab_widget.leak.set_colors(self.colors)
@@ -439,7 +437,6 @@ class TabWidget(qtw.QWidget):
         self.state_widget = StateWidget(tab, ["Bambi Mode", "Kill Button", "Reversed"], PATH + "/dash_styling/state_widget.txt", self.colors)
         self.com_shift_widget = TriNumericDataWidget(tab, "CoM Shift", PATH + "/dash_styling/tri_numeric_data_widget.txt", self.colors)
         self.thrt_crv_widget = ThrtCrvWidget(tab, self.colors)
-        self.turn_bank_indicator_widget = TurnBankIndicator(tab, PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.temp_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.depth_widget = NumericDataWidget(tab, "Depth (m)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.pressure_sensor_widget = NumericDataWidget(tab, "Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
@@ -450,7 +447,6 @@ class TabWidget(qtw.QWidget):
         vert_widgets_layout.addWidget(self.state_widget, stretch=18)
         vert_widgets_layout.addWidget(self.com_shift_widget, stretch=8)
         vert_widgets_layout.addWidget(self.thrt_crv_widget, stretch=18)
-        vert_widgets_layout.addWidget(self.turn_bank_indicator_widget, stretch=14)
         vert_widgets_layout.addWidget(self.temp_widget, stretch=11)
         vert_widgets_layout.addWidget(self.depth_widget, stretch=11)
         vert_widgets_layout.addWidget(self.countdown_widget, stretch=20)

@@ -46,6 +46,14 @@ def generate_launch_description():
             respawn=True,
             respawn_delay=respawn_time
         ),
+        Node(
+            package='seahawk',
+            executable='servo',
+            name='servo',
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time
+        ),
     ]
 
     if down_camera_path is not None and pathlib.Path(down_camera_path).exists():
