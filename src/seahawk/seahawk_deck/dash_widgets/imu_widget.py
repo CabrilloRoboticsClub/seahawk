@@ -13,7 +13,7 @@ class PaintWidget(qtw.QWidget):
         # TODO: these should be in the dash_styling directory then added to the color_palete.py dict. See file for what i mean
         # Also svgs work better, I can get you some if needed
 
-        self.orange_up = self.colors["UP_ORANGE"]
+        # self.orange_up = self.colors["UP_ORANGE"]
 
         # Commented cause I was too lazy to move these, its 2 am 
         # self.orange_up = os.path.join(os.path.dirname(__file__), 'arrow_orange_transparent_up.png')
@@ -38,7 +38,7 @@ class PaintWidget(qtw.QWidget):
         pen = QPen(Qt.white, 3)
         painter.setPen(pen)
         
-        self.q_orange_up = QImage(self.orange_up)
+        # self.q_orange_up = QImage(self.orange_up)
         # self.q_orange_down = QImage(self.orange_down)
 
         # self.q_empty_up = QImage(self.empty_up)
@@ -94,6 +94,9 @@ class ImuWidget(qtw.QWidget):
 
     def __init__(self, parent: qtw.QWidget, style_sheet_file: str, colors: dict):
         super().__init__(parent)
+
+        with open(style_sheet_file) as style_sheet:
+            self.style_sheet = style_sheet.read()
 
         self.linear_accel_x = None
         self.linear_accel_y = None
