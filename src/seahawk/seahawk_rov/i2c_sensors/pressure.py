@@ -51,6 +51,5 @@ class Pressure:
             pressure_msg.pressure = self.sensor.pressure(self.pascal)
             pressure_msg.depth = self.sensor.depth()
             self.pressure_publisher.publish(pressure_msg)  # publish depth_msg to depth_topic
-            self.node.get_logger().info(f'{self.sensor.pressure(self.pascal)}')
         else:
             self.node.get_logger().info("Warning: ms5837 failed to publish (OSError)\n")
