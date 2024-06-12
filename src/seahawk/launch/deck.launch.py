@@ -1,10 +1,9 @@
-from launch import LaunchDescription
-from launch.actions import ExecuteProcess
-from launch_ros.actions import Node
-from launch.substitutions import PathJoinSubstitution
-
 import pathlib
 import os
+
+from launch import LaunchDescription
+from launch_ros.actions import Node
+
 
 def find_resource(package_name, relpath):
     """This is probably done somewhere in launch but the documentation is garbage."""
@@ -18,6 +17,8 @@ def find_resource(package_name, relpath):
     return str(relpath)
         
 def generate_launch_description():
+    respawn_time = 0
+
     return LaunchDescription([
         Node(
             package='image_transport',
@@ -34,7 +35,9 @@ def generate_launch_description():
                 'qos_overrides./parameter_events.publisher.history': 'keep_last',
                 'qos_overrides./parameters_events.publisher.durability': 'volatile',
                 'qos_overrides./parameter_events.publisher.depth': 1,
-            }],            
+            }],     
+            respawn=True,
+            respawn_delay=respawn_time,       
         ),
         Node(
             package='image_transport',
@@ -51,7 +54,9 @@ def generate_launch_description():
                 'qos_overrides./parameter_events.publisher.history': 'keep_last',
                 'qos_overrides./parameters_events.publisher.durability': 'volatile',
                 'qos_overrides./parameter_events.publisher.depth': 1,
-            }],            
+            }],        
+            respawn=True,
+            respawn_delay=respawn_time,    
         ),
         Node(
             package='image_transport',
@@ -68,30 +73,40 @@ def generate_launch_description():
                 'qos_overrides./parameter_events.publisher.history': 'keep_last',
                 'qos_overrides./parameters_events.publisher.durability': 'volatile',
                 'qos_overrides./parameter_events.publisher.depth': 1,
-            }],            
+            }],    
+            respawn=True,
+            respawn_delay=respawn_time,        
         ),
         Node(
             package='seahawk',
             executable='thrust',
             name='thrust',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time,
         ),
         Node(
             package='seahawk',
             executable='pilot_input',
             name='pilot_input',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time,
         ),
         Node(
             package='seahawk',
             executable='dash',
             name='dash',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time,
         ),
         Node(
             package='joy',
             executable='joy_node',
             name='joy_node',
-            output='screen'
+            output='screen',
+            respawn=True,
+            respawn_delay=respawn_time,
         ),
     ])

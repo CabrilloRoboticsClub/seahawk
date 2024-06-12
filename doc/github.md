@@ -26,7 +26,7 @@ GitHub is the free web based platform we and many other software engineers use t
     ```
 
 
-## 3️ Generate an SSH key
+## 3 Generate an SSH key
 1. Generate an SSH key to connect your system to your GitHub account if you do not already have one.
     ```sh
     ssh-keygen -t ed25519
@@ -51,7 +51,7 @@ GitHub is the free web based platform we and many other software engineers use t
 3. Save the key by clicking <img width="80" alt="Add SSH Key" src="img/add_ssh.png">
 
 
-## 5️ Clone the repository to your system
+## 5 Clone the repository to your system
 1. Return to your terminal and navigate using `cd` to where you would like this repo's contents to live with your file system.
 2. Clone the repo and its sub modules.
     ```sh
@@ -65,14 +65,14 @@ GitHub is the free web based platform we and many other software engineers use t
 
 # Development using git
 
-## 0️ Sync and pull the changes
+## 0 Sync and pull the changes
 1. Next navigate to the repo on your system
 2. Enter the command `git pull` to pull the changes on GitHub onto your device
    ```sh
    git pull origin main
    ```
 
-## 1️ Make a branch
+## 1 Make a branch
 1. Pull the meta data from the remote repo to update the remote branches
     ```sh
     git fetch
@@ -82,7 +82,7 @@ GitHub is the free web based platform we and many other software engineers use t
     git checkout -b branch_name
     ```
 
-## 2️ Add and commit your changes
+## 2 Add and commit your changes
 Once you make some changes you would like to be documented you need to `commit` them. Committing changes is how you can mark versions of your code you would like to be tracked. It is a good idea to commit changes after you add/remove a feature that way there is a record of your changes. 
 1. Add all files you wish to commit with `git add`. All files you all will be committed under the same commit
     ```
@@ -106,7 +106,7 @@ Once you make some changes you would like to be documented you need to `commit` 
 
 <br>
 
-## 3️ Push your changes
+## 3 Push your changes
 Once you have finished a coding session it is a good idea to `push` your commits. The `push` command is basically the opposite of `pull`. `push` takes the changes (commits) you made on your local system and sends them to GitHub.
 1. Enter the command `git push origin branch_name` to push the changes from your system to GitHub where `branch_name` is the name of the branch you are on
     ```
@@ -114,7 +114,7 @@ Once you have finished a coding session it is a good idea to `push` your commits
     ```
 2. You can confirm this worked by heading to Github and seeing the changes reflected on your repo page.
 
-## 4️ Create a pull request
+## 4 Create a pull request
 When you think your code is ready to merge into the main Cabrillo Robotics Code create a pull request. 
 1. Go to the pull requests page on GitHub and click on <img width="80" alt="new pull request" src="img/new_pr.png">.
 2. Select your branch as the branch to compare to.

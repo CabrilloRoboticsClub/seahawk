@@ -1,5 +1,5 @@
 """
-spinny_thing.py
+servo.py
 
 Spinnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
 
@@ -30,9 +30,9 @@ from sensor_msgs.msg import Joy
 import time
 
 
-class SpinnyThing(Node):
+class Servo(Node):
     """
-    Class which spins the spinny thing from the dpad left and right.
+    Class which spins the spinny thing from the spin_throttle left and right.
     """
     
     def __init__(self):
@@ -41,14 +41,20 @@ class SpinnyThing(Node):
         """
         super().__init__("spinny_thing")
 
-        self.PIN = 19
+        self.SPIN_PIN = 19
+        self.TILT_PIN = 5
         self.CLOCKWISE = 3
         self.COUNTERCLOCKWISE = 10 
 
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.PIN, GPIO.OUT)
-        self.pwm = GPIO.PWM(self.PIN, 50)
-        self.pwm.start(0)
+
+        GPIO.setup(self.SPIN_PIN, GPIO.OUT)
+        self.spin_pwm = GPIO.PWM(self.SPIN_PIN, 50)
+        self.spin_pwm.start(0)
+
+        GPIO.setup(self.TILT_PIN, GPIO.OUT)
+        self.tilt_pwm = GPIO.PWM(self.TILT_PIN, 50)
+        self.tilt_pwm.start(0)
 
         self.create_subscription(Joy, "joy", self.callback, 10)
 
@@ -57,26 +63,35 @@ class SpinnyThing(Node):
         Callback for every time the Joy message publishes.
         Sends pwm to the spinny thing.
         """
-        dpad = -int(msg.axes[6])
-        if dpad == 1:
-            self.pwm.ChangeDutyCycle(self.CLOCKWISE)
-        elif dpad == -1:
-            self.pwm.ChangeDutyCycle(self.COUNTERCLOCKWISE)
+        spin_throttle = -int(msg.axes[6])
+        tilt_throttle = int(msg.axes[7])
+        if spin_throttle == 1:
+            self.spin_pwm.ChangeDutyCycle(self.CLOCKWISE)
+        elif spin_throttle == -1:
+            self.spin_pwm.ChangeDutyCycle(self.COUNTERCLOCKWISE)
         else:
-            self.pwm.ChangeDutyCycle(0)
+            self.spin_pwm.ChangeDutyCycle(0)
+
+        if tilt_throttle == 1:
+            self.tilt_pwm.ChangeDutyCycle(self.CLOCKWISE)
+        elif tilt_throttle == -1:
+            self.tilt_pwm.ChangeDutyCycle(self.COUNTERCLOCKWISE)
+        else:
+            self.tilt_pwm.ChangeDutyCycle(0)
 
     def __del__(self):
         """
         "Destructor" for node. Cleans up pins when we are done with them.
         """
-        self.pwm.stop()
+        self.spin_pwm.stop()
+        self.tilt_pwm.stop()
         GPIO.cleanup()
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = SpinnyThing()
-    try: 
+    node = Servo()
+    try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         del node
