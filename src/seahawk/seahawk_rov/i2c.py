@@ -48,7 +48,7 @@ class I2C(Node):
         i2c = busio.I2C(board.SCL, board.SDA)
         self.bno085 = BNO085(self, i2c)  # IMU
         self.bme280 = BME280(self, i2c)  # Pressure, Temperature, Humidity
-        # self.pressure = Pressure(self, i2c)
+        self.pressure = Pressure(self)
 
         self.create_timer(0.1, self.pub_callback)
     

@@ -13,6 +13,7 @@ from rclpy.publisher import Publisher
 from std_msgs.msg import String
 from rcl_interfaces.msg import ParameterEvent
 from sensor_msgs.msg import Image
+from seahawk_msgs.msg import PressureSensor
 
 from seahawk_deck.dash_styling.color_palette import DARK_MODE, LIGHT_MODE
 from seahawk_deck.dash_widgets.countdown_widget import CountdownWidget
@@ -47,6 +48,7 @@ class RosQtBridge(qtw.QWidget):
     new_bme280_sgl = qtc.pyqtSignal()
     new_publisher_sgl = qtc.pyqtSignal()
     new_set_params_sgl = qtc.pyqtSignal()
+    new_pressure_msg_sgl = qtc.pyqtSignal()
 
     def __init__(self):
         """
@@ -152,6 +154,17 @@ class RosQtBridge(qtw.QWidget):
         """
         self.bme280_msg = msg
         self.new_bme280_sgl.emit()
+
+    def callback_pressure(self, msg: PressureSensor):
+        """
+        Gives Qt access to the pressure topic and emits 'new_pressure_msg_sgl'
+
+        Args:
+            msg: messages of type PressureSensor recieved from 'pressure_topic'
+        """
+
+        self.pressure_msg = msg
+        self.new_pressure_msg_sgl.emit()
 
     def add_publisher(self, pub: Publisher):
         """
@@ -354,6 +367,7 @@ class TabWidget(qtw.QWidget):
         self.ros_qt_bridge.new_cam_front_msg_sgl.connect(self.update_cam_front)
         self.ros_qt_bridge.new_debug_sgl.connect(self.update_debug)
         self.ros_qt_bridge.new_bme280_sgl.connect(self.update_bme280)
+        self.ros_qt_bridge.new_pressure_msg_sgl.connect(self.update_pressure_msg)
     
         # Define layout of tabs
         layout = qtw.QVBoxLayout(self)
@@ -427,7 +441,8 @@ class TabWidget(qtw.QWidget):
         self.thrt_crv_widget = ThrtCrvWidget(tab, self.colors)
         self.turn_bank_indicator_widget = TurnBankIndicator(tab, PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.temp_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
-        self.depth_widget = NumericDataWidget(tab, "Depth", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.depth_widget = NumericDataWidget(tab, "Depth (m)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.pressure_sensor_widget = NumericDataWidget(tab, "Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.countdown_widget = CountdownWidget(tab, PATH + "/dash_styling/countdown_widget.txt", self.colors, minutes=15, seconds=0)
 
         # Add widgets to side vertical layout
@@ -542,6 +557,10 @@ class TabWidget(qtw.QWidget):
         self.state_widget.update(input_state_dict)
         self.thrt_crv_widget.update(self.ros_qt_bridge.input_state_msg.thrt_crv)
 
+    @qtc.pyqtSlot()
+    def update_pressure_msg(self):
+        self.depth_widget.update(f"{((self.ros_qt_bridge.pressure_msg.depth / 1000) + 0.06):.3f}")  # Convert from mm to m, display to 3 decimal places
+
     def create_debug_tab(self, tab: qtw.QWidget):
         # Setup layouts
         debug_layout = qtw.QHBoxLayout(tab)
@@ -632,6 +651,7 @@ class Dash(Node):
         self.create_subscription(Image, "camera/back/image", ros_qt_bridge.callback_cam_back, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.callback_param_event, 10)
+        self.create_subscription(PressureSensor, "pressure", ros_qt_bridge.callback_pressure, 10)
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))
 

@@ -7,14 +7,7 @@ package_name = 'seahawk'
 setup(
     name=package_name,
     version='0.0.1',
-    packages=[
-        'seahawk_deck', 
-        'seahawk_rov', 
-        'seahawk_deck.dash_styling', 
-        'seahawk_deck.dash_widgets', 
-        'seahawk_rov.i2c_sensors', 
-        'seahawk_rov.i2c_sensors.ms5837'
-    ],
+    packages=['seahawk_deck', 'seahawk_rov', 'seahawk_deck.dash_styling', 'seahawk_deck.dash_widgets', 'seahawk_rov.i2c_sensors'],
     data_files=[
         ('share/ament_index/resource_index/packages', ['resources/' + package_name]),
         (os.path.join('share', package_name), ['package.xml']),
