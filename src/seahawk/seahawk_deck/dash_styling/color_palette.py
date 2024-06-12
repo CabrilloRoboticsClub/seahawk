@@ -18,10 +18,10 @@ DARK_MODE = {
     "DOWN_ARROW"        : f"{PATH}/countdown_down.svg",
     "UP_ARROW"          : f"{PATH}/countdown_up.svg",
     "MAP_IMG"           : f"{PATH}/product_demo_map_drk.png",
-    "UP_ORANGE"         : f"{PATH}/arrow_orange_transparent.svg",
-    "DOWN_ORANGE"       : f"{PATH}/arrow_orange_transparent_down.svg",
-    "UP_EMPTY"          : f"{PATH}/arrow_empty_transparent.svg",
-    "DOWN_EMPTY"        : f"{PATH}/arrow_empty_transparent_down.svg"
+    "DOWN_ORANGE"       : f"{PATH}/arrow_orange_transparent.svg",
+    "UP_ORANGE"         : f"{PATH}/arrow_orange_transparent_down.svg",
+    "DOWN_EMPTY"        : f"{PATH}/arrow_empty_transparent.svg",
+    "UP_EMPTY"          : f"{PATH}/arrow_empty_transparent_down.svg"
 }
 
 LIGHT_MODE = {
@@ -40,8 +40,8 @@ LIGHT_MODE = {
     "DOWN_ARROW"        : f"{PATH}/countdown_down.svg",
     "UP_ARROW"          : f"{PATH}/countdown_up.svg",
     "MAP_IMG"           : f"{PATH}/product_demo_map_lite.png",
-    "UP_ORANGE"         : f"{PATH}/arrow_orange_transparent.svg",
-    "DOWN_ORANGE"       : f"{PATH}/arrow_orange_transparent_down.svg",
-    "UP_EMPTY"          : f"{PATH}/arrow_empty_transparent.svg",
-    "DOWN_EMPTY"        : f"{PATH}/arrow_empty_transparent_down.svg"
+    "DOWN_ORANGE"       : f"{PATH}/arrow_orange_transparent.svg",
+    "UP_ORANGE"         : f"{PATH}/arrow_orange_transparent_down.svg",
+    "DOWN_EMPTY"        : f"{PATH}/arrow_empty_transparent.svg",
+    "UP_EMPTY"          : f"{PATH}/arrow_empty_transparent_down.svg"
 }

@@ -5,22 +5,19 @@ import os
 
 class PaintWidget(qtw.QWidget):
 
-    def __init__(self):
+    def __init__(self, colors):
         super().__init__()
-        self.scale_value = 30
+        self.scale_value = 100
         self.vector = QVector3D(0, 0, 0)  # set dummy values
 
-        # TODO: these should be in the dash_styling directory then added to the color_palete.py dict. See file for what i mean
-        # Also svgs work better, I can get you some if needed
+        self.orange_up = colors["UP_ORANGE"]
+        self.orange_down = colors["DOWN_ORANGE"]
 
-        # self.orange_up = self.colors["UP_ORANGE"]
+        self.empty_up = colors["UP_EMPTY"]
+        self.empty_down = colors["DOWN_EMPTY"]
 
-        # Commented cause I was too lazy to move these, its 2 am 
-        # self.orange_up = os.path.join(os.path.dirname(__file__), 'arrow_orange_transparent_up.png')
-        # self.orange_down = os.path.join(os.path.dirname(__file__), 'arrow_orange_transparent_down.png')
-
-        # self.empty_up = os.path.join(os.path.dirname(__file__), 'arrow_empty_transparent_up.png')
-        # self.empty_down = os.path.join(os.path.dirname(__file__), 'arrow_empty_transparent_down.png')
+        self.coordinate_colors = colors["ACCENT"]
+        self.vector_colors = colors["TEXT_EMPH"]
 
 
     def create_vector(self, x_cord, y_cord, z_cord):
@@ -35,53 +32,53 @@ class PaintWidget(qtw.QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.translate(int(self.width()/2), int(self.height()/2))
         painter.scale(1, -1)
-        pen = QPen(Qt.white, 3)
+        self.q_vector_colors = QColor(self.vector_colors)
+        self.q_coordinate_colors = QColor(self.coordinate_colors)
+
+        pen = QPen(self.q_vector_colors, 5)
         painter.setPen(pen)
         
-        # self.q_orange_up = QImage(self.orange_up)
-        # self.q_orange_down = QImage(self.orange_down)
+        self.q_orange_up = QImage(self.orange_up)
+        self.q_orange_down = QImage(self.orange_down)
 
-        # self.q_empty_up = QImage(self.empty_up)
-        # self.q_empty_down = QImage(self.empty_down)
+        self.q_empty_up = QImage(self.empty_up)
+        self.q_empty_down = QImage(self.empty_down)
 
-        # self.q_orange_up = QImage(self.q_orange_up.scaled(self.scale_value, self.scale_value))
-        # self.q_orange_down = QImage(self.q_orange_down.scaled(self.scale_value, self.scale_value))
+        self.q_orange_up = QImage(self.q_orange_up.scaled(self.scale_value, self.scale_value))
+        self.q_orange_down = QImage(self.q_orange_down.scaled(self.scale_value, self.scale_value))
 
-        # self.q_empty_up = QImage(self.q_empty_up.scaled(self.scale_value, self.scale_value))
-        # self.q_empty_down = QImage(self.q_empty_down.scaled(self.scale_value, self.scale_value))
+        self.q_empty_up = QImage(self.q_empty_up.scaled(self.scale_value, self.scale_value))
+        self.q_empty_down = QImage(self.q_empty_down.scaled(self.scale_value, self.scale_value))
         
         painter.drawLine(0, 0, int(self.vector.x()), int(self.vector.y()))
+        
 
-        # TODO: use colors dict values instead of qt defaults
-        pen = QPen(Qt.white, 7)
+        pen = QPen(self.q_vector_colors, 9)
         painter.setPen(pen)
         painter.drawPoint(int(self.vector.x()), int(self.vector.y()))
 
-        pen = QPen(Qt.red, 10)
+        pen = QPen(self.q_coordinate_colors, 10)
         painter.setPen(pen)
         painter.drawPoint(0, 0)
 
-        pen = QPen(Qt.red, 3)
+        pen = QPen(self.q_coordinate_colors, 5)
         painter.setPen(pen)
         painter.drawLine(0, int(self.height()), 0, -int(self.height()))
         painter.drawLine(int(self.height()/2), 0, -int(self.height()/2), 0)
         painter.drawEllipse(-int(self.height()/2), -int(self.height()/2), self.height(), self.height())
+    
+        if int(self.vector.z()) < 0:
+            painter.drawImage(-int(self.height()/2) - 125, int(self.height()/40), self.q_empty_up)
 
-        painter.drawImage(55, 20, self.q_orange_up)
+            painter.drawImage(-int(self.height()/2) - 125, -int(self.height()/4), self.q_orange_down)
+        elif int(self.vector.z()) > 0:
+            painter.drawImage(-int(self.height()/2) - 125, int(self.height()/40), self.q_orange_up)
 
-        # TODO: Good, but images should again be coming from colors dict
-        # if int(self.vector.z()) < 0:
-        #     painter.drawImage(55, 20, self.q_empty_up)
+            painter.drawImage(-int(self.height()/2) - 125, -int(self.height()/4), self.q_empty_down)
+        else:
+            painter.drawImage(-int(self.height()/2) - 125, int(self.height()/40), self.q_empty_up)
 
-        #     painter.drawImage(55, -20, self.q_orange_down)
-        # elif int(self.vector.z()) > 0:
-        #     painter.drawImage(55, 20, self.q_orange_up)
-
-        #     painter.drawImage(55, -20, self.q_empty_down)
-        # else:
-        #     painter.drawImage(55, 20, self.q_empty_up)
-
-        #     painter.drawImage(55, -20, self.q_empty_down)
+            painter.drawImage(-int(self.height()/2) - 125, -int(self.height()/4), self.q_empty_down)
 
         painter.end()
 
@@ -102,14 +99,14 @@ class ImuWidget(qtw.QWidget):
         self.linear_accel_y = None
         self.linear_accel_z = None
 
-        self._init_ui()
+        self._init_ui(colors)
 
         # Apply css styling
         self.set_colors(colors)
 
         # TODO: load a style sheet (should be a param to init), see other widgets for example
 
-    def _init_ui(self):
+    def _init_ui(self, colors):
 
         # with open(style_sheet_file) as style_sheet:
         #     self.style_sheet = style_sheet.read()
@@ -127,7 +124,7 @@ class ImuWidget(qtw.QWidget):
         self.layout_inner = qtw.QVBoxLayout(self)
         self.frame.setLayout(self.layout_inner)
 
-        self.paint_widget = PaintWidget()
+        self.paint_widget = PaintWidget(colors)
         self.layout_inner.addWidget(self.paint_widget)
 
     def update(self, imu_data):

@@ -643,7 +643,7 @@ class Dash(Node):
         self.create_subscription(Image, "camera/back/image", ros_qt_bridge.callback_cam_back, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.callback_param_event, 10)
-        self.create_subscription(Imu,"bno085", ros_qt_bridge.callback_bno085, 10)
+        self.create_subscription(Imu,"/logic_tube/imu", ros_qt_bridge.callback_bno085, 10)
 
         ros_qt_bridge.add_publisher(self.create_publisher(String, "keystroke", 10))
 
