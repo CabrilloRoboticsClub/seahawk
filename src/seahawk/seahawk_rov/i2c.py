@@ -29,7 +29,7 @@ from rclpy.node import Node
 
 from seahawk_rov.i2c_sensors.bno085 import BNO085
 from seahawk_rov.i2c_sensors.bme280 import BME280
-# from seahawk_rov.i2c_sensors.pressure import Pressure
+from seahawk_rov.i2c_sensors.pressure import Pressure
 
 import board
 import busio
@@ -55,7 +55,7 @@ class I2C(Node):
     def pub_callback(self):
         self.bno085.pub_callback()
         self.bme280.pub_callback()
-        # self.pressure.pub_callback()
+        self.pressure.pub_callback()
 
 
 def main(args=None):

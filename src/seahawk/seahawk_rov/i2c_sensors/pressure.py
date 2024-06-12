@@ -30,7 +30,7 @@ from .ms5837 import *
 
 class Pressure:
 
-    def __init__(self, node):  # This is the correct address i think
+    def __init__(self, node):
         self.node = node
         self.pressure_publisher = self.node.create_publisher(PressureSensor, "pressure", 10)  # create a publisher that publishes messages of type String to pressure_topic
 
