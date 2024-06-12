@@ -52,7 +52,6 @@ class PaintWidget(qtw.QWidget):
         
         painter.drawLine(0, 0, int(self.vector.x()), int(self.vector.y()))
         
-
         pen = QPen(self.q_vector_colors, 9)
         painter.setPen(pen)
         painter.drawPoint(int(self.vector.x()), int(self.vector.y()))
