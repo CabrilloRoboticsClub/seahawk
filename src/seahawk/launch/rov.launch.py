@@ -22,10 +22,10 @@ front_camera_path   = '/dev/v4l/by-path/platform-fd500000.pcie-pci-0000:01:00.0-
 #     print("Front camera not found!")
 #     front_camera_path = None
 
-microros_serial_device = "/dev/ttyS0"
-subprocess.run('sudo /usr/local/bin/openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program pico/seahawk.elf verify reset exit"',
-                shell=True,
-                check=True)
+# microros_serial_device = "/dev/ttyS0"
+# subprocess.run('sudo /usr/local/bin/openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program pico/seahawk.elf verify reset exit"',
+#                 shell=True,
+#                 check=True)
 
 def generate_launch_description():
     nodes = [
@@ -126,33 +126,33 @@ def generate_launch_description():
     else:
         print("Top camera not found!")
 
-    if microros_serial_device is not None and pathlib.Path(microros_serial_device).exists():
-        nodes.append(
-            ExecuteProcess(
-                cmd=[[
-                    FindExecutable(name='docker'),
-                    " run " ,
-                    " --rm ",
-                    " --name micro-ros-agent ",
-                    f" --device {microros_serial_device} ",
-                    " --network host ",
-                    " microros/micro-ros-agent:humble ",
-                    f" serial --dev {microros_serial_device} baudrate=115200 ",
-                ]],
-                shell=True,
-                name="micro-ros-agent",
-                output='both',
-            ),
-        )
+    # if microros_serial_device is not None and pathlib.Path(microros_serial_device).exists():
+    #     nodes.append(
+    #         ExecuteProcess(
+    #             cmd=[[
+    #                 FindExecutable(name='docker'),
+    #                 " run " ,
+    #                 " --rm ",
+    #                 " --name micro-ros-agent ",
+    #                 f" --device {microros_serial_device} ",
+    #                 " --network host ",
+    #                 " microros/micro-ros-agent:humble ",
+    #                 f" serial --dev {microros_serial_device} baudrate=115200 ",
+    #             ]],
+    #             shell=True,
+    #             name="micro-ros-agent",
+    #             output='both',
+    #         ),
+    #     )
 
-        nodes.append(
-            RegisterEventHandler(
-                OnShutdown(
-                    on_shutdown=lambda event, ctx: subprocess.run("docker kill micro-ros-agent", shell=True)
-                )
-            ),
-        )
-    else:
-        print("No micro-ros serial device.")
+    #     nodes.append(
+    #         RegisterEventHandler(
+    #             OnShutdown(
+    #                 on_shutdown=lambda event, ctx: subprocess.run("docker kill micro-ros-agent", shell=True)
+    #             )
+    #         ),
+    #     )
+    # else:
+    #     print("No micro-ros serial device.")
 
     return LaunchDescription(nodes)
