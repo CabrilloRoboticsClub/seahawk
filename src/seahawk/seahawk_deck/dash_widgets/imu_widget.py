@@ -3,12 +3,16 @@ from PyQt5.QtGui import QPainter, QPen, QVector3D, QImage, QColor
 from PyQt5.QtCore import Qt
 import os
 
+
 class PaintWidget(qtw.QWidget):
 
-    def __init__(self, colors):
+    def __init__(self, colors, style_sheet_file):
         super().__init__()
         self.scale_value = 100
         self.vector = QVector3D(0, 0, 0)  # set dummy values
+
+        with open(style_sheet_file) as style_sheet:
+            self.style_sheet = style_sheet.read()
 
         self.orange_up = colors["UP_ORANGE"]
         self.orange_down = colors["DOWN_ORANGE"]
@@ -19,6 +23,8 @@ class PaintWidget(qtw.QWidget):
         self.coordinate_colors = colors["ACCENT"]
         self.vector_colors = colors["TEXT_EMPH"]
 
+    def set_colors(self, new_colors: dict):
+        self.setStyleSheet(self.style_sheet.format(**new_colors))
 
     def create_vector(self, x_cord, y_cord, z_cord):
         self.vector.setX(x_cord)
@@ -34,9 +40,6 @@ class PaintWidget(qtw.QWidget):
         painter.scale(1, -1)
         self.q_vector_colors = QColor(self.vector_colors)
         self.q_coordinate_colors = QColor(self.coordinate_colors)
-
-        pen = QPen(self.q_vector_colors, 5)
-        painter.setPen(pen)
         
         self.q_orange_up = QImage(self.orange_up)
         self.q_orange_down = QImage(self.orange_down)
@@ -49,6 +52,15 @@ class PaintWidget(qtw.QWidget):
 
         self.q_empty_up = QImage(self.q_empty_up.scaled(self.scale_value, self.scale_value))
         self.q_empty_down = QImage(self.q_empty_down.scaled(self.scale_value, self.scale_value))
+
+        pen = QPen(self.q_coordinate_colors, 5)
+        painter.setPen(pen)
+        painter.drawLine(0, int(self.height()), 0, -int(self.height()))
+        painter.drawLine(int(self.height()/2), 0, -int(self.height()/2), 0)
+        painter.drawEllipse(-int(self.height()/2), -int(self.height()/2), self.height(), self.height())
+
+        pen = QPen(self.q_vector_colors, 5)
+        painter.setPen(pen)
         
         painter.drawLine(0, 0, int(self.vector.x()), int(self.vector.y()))
         
@@ -59,12 +71,6 @@ class PaintWidget(qtw.QWidget):
         pen = QPen(self.q_coordinate_colors, 10)
         painter.setPen(pen)
         painter.drawPoint(0, 0)
-
-        pen = QPen(self.q_coordinate_colors, 5)
-        painter.setPen(pen)
-        painter.drawLine(0, int(self.height()), 0, -int(self.height()))
-        painter.drawLine(int(self.height()/2), 0, -int(self.height()/2), 0)
-        painter.drawEllipse(-int(self.height()/2), -int(self.height()/2), self.height(), self.height())
     
         if int(self.vector.z()) < 0:
             painter.drawImage(-int(self.height()/2) - 125, int(self.height()/40), self.q_empty_up)
@@ -98,20 +104,19 @@ class ImuWidget(qtw.QWidget):
         self.linear_accel_y = None
         self.linear_accel_z = None
 
-        self._init_ui(colors)
+        self._init_ui(colors, style_sheet_file)
 
         # Apply css styling
         self.set_colors(colors)
 
         # TODO: load a style sheet (should be a param to init), see other widgets for example
 
-    def _init_ui(self, colors):
+    def _init_ui(self, colors, style_sheet_file):
 
         # Create an outer layout for all widgets to mount on
         self.layout_outer = qtw.QVBoxLayout(self)
         self.setLayout(self.layout_outer)
         
-
         # Create a frame on outer layout
         self.frame = qtw.QFrame()
         self.layout_outer.addWidget(self.frame)
@@ -120,7 +125,7 @@ class ImuWidget(qtw.QWidget):
         self.layout_inner = qtw.QVBoxLayout(self)
         self.frame.setLayout(self.layout_inner)
 
-        self.paint_widget = PaintWidget(colors)
+        self.paint_widget = PaintWidget(colors, style_sheet_file)
         self.layout_inner.addWidget(self.paint_widget)
 
     def update(self, imu_data):
@@ -137,5 +142,6 @@ class ImuWidget(qtw.QWidget):
         Args:
             new_colors: Hex codes to color widget with.
         """
+        self.paint_widget.set_colors(new_colors)
         self.setStyleSheet(self.style_sheet.format(**new_colors))
 
