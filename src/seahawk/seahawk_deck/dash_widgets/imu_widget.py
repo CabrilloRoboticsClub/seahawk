@@ -107,9 +107,6 @@ class ImuWidget(qtw.QWidget):
 
     def _init_ui(self, colors):
 
-        # with open(style_sheet_file) as style_sheet:
-        #     self.style_sheet = style_sheet.read()
-
         # Create an outer layout for all widgets to mount on
         self.layout_outer = qtw.QVBoxLayout(self)
         self.setLayout(self.layout_outer)
@@ -127,8 +124,8 @@ class ImuWidget(qtw.QWidget):
         self.layout_inner.addWidget(self.paint_widget)
 
     def update(self, imu_data):
-        self.linear_accel_x = 100*imu_data.linear_acceleration.x  # probably redundant
-        self.linear_accel_y = 100*imu_data.linear_acceleration.y
+        self.linear_accel_x = 100*imu_data.linear_acceleration.y  # x & y are swapped bc imu is arranged silly
+        self.linear_accel_y = 100*imu_data.linear_acceleration.x
         self.linear_accel_z = 100*imu_data.linear_acceleration.z
 
         self.paint_widget.create_vector(self.linear_accel_x, self.linear_accel_y, self.linear_accel_z)
