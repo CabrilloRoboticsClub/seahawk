@@ -321,6 +321,7 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.temp_widget.set_colors(self.colors)
         self.tab_widget.depth_widget.set_colors(self.colors)
         self.tab_widget.countdown_widget.set_colors(self.colors)
+        self.tab_widget.imu_widget.set_colors(self.colors)
         self.tab_widget.term_widget.set_colors(self.colors)
         self.tab_widget.leak.set_colors(self.colors)
         self.tab_widget.humidity.set_colors(self.colors)
