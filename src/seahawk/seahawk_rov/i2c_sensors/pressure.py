@@ -45,11 +45,11 @@ class Pressure:
 
     def pub_callback(self):
         pressure_msg = PressureSensor()  # create a obj of type Pressure
-
-        if self.sensor.read():
-            pressure_msg = PressureSensor()  # create a obj of type Pressure
-            pressure_msg.pressure = self.sensor.pressure(self.pascal)
-            pressure_msg.depth = self.sensor.depth()
-            self.pressure_publisher.publish(pressure_msg)  # publish depth_msg to depth_topic
-        else:
-            self.node.get_logger().info("Warning: ms5837 failed to publish (OSError)\n")
+        try:
+            if self.sensor.read():
+                pressure_msg = PressureSensor()  # create a obj of type Pressure
+                pressure_msg.pressure = self.sensor.pressure(self.pascal)
+                pressure_msg.depth = self.sensor.depth()
+                self.pressure_publisher.publish(pressure_msg)  # publish depth_msg to depth_topic
+        except:
+            self.node.get_logger().info("Warning: ms5837 failed to publish\n")

@@ -54,8 +54,8 @@ class BME280:
             self.publisher.publish(msg)
         except OSError as e:
             self.node.get_logger().info("Warning: BME280 failed to publish (OSError)\n", e)
-        except Exception as e:
-            self.node.get_logger().info("Warning: BME280 failed to publish (other)\n", e)
+        except:
+            self.node.get_logger().info("Warning: BME280 failed to publish (other)\n")
 
 
 
