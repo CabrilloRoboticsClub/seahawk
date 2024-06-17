@@ -10,10 +10,9 @@ from cv_bridge import CvBridge, CvBridgeError
 import rclpy
 from rclpy.node import Node 
 from rclpy.publisher import Publisher
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
 from rcl_interfaces.msg import ParameterEvent
 from sensor_msgs.msg import Image
-from seahawk_msgs.msg import PressureSensor
 
 from seahawk_deck.dash_styling.color_palette import DARK_MODE, LIGHT_MODE
 from seahawk_deck.dash_widgets.countdown_widget import CountdownWidget
@@ -24,7 +23,7 @@ from seahawk_deck.dash_widgets.term_widget import TermWidget
 from seahawk_deck.set_remote_params import SetRemoteParams
 from seahawk_deck.dash_widgets.tri_numeric_data_widget import TriNumericDataWidget
 from seahawk_deck.dash_widgets.dynamic_plot_widget import DynamicPlotWidget
-from seahawk_msgs.msg import InputStates, DebugInfo, Bme280
+from seahawk_msgs.msg import InputStates, DebugInfo, Bme280, PressureSensor
 
 PATH = path.dirname(__file__)
 
@@ -45,6 +44,7 @@ class RosQtBridge(qtw.QWidget):
     new_com_param_sgl = qtc.pyqtSignal()
     new_debug_sgl = qtc.pyqtSignal()
     new_bme280_sgl = qtc.pyqtSignal()
+    new_temperature_sgl = qtc.pyqtSignal()
     new_publisher_sgl = qtc.pyqtSignal()
     new_set_params_sgl = qtc.pyqtSignal()
     new_pressure_msg_sgl = qtc.pyqtSignal()
@@ -62,6 +62,7 @@ class RosQtBridge(qtw.QWidget):
         self.com = [0.0] * 3
         self.debug_msg = None
         self.bme280_msg = None
+        self.temperature_msg = None
         self.keystroke_pub = None
         self.pilot_input_set_params = None
 
@@ -153,6 +154,10 @@ class RosQtBridge(qtw.QWidget):
         """
         self.bme280_msg = msg
         self.new_bme280_sgl.emit()
+
+    def callback_temperature(self, msg: Float32):
+        self.temperature_msg = msg
+        self.new_temperature_sgl.emit()
 
     def callback_pressure(self, msg: PressureSensor):
         """
@@ -316,7 +321,7 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget.state_widget.set_colors(self.colors)
         self.tab_widget.com_shift_widget.set_colors(self.colors)
         self.tab_widget.thrt_crv_widget.set_colors(self.colors)
-        self.tab_widget.temp_widget.set_colors(self.colors)
+        self.tab_widget.temperature_widget.set_colors(self.colors)
         self.tab_widget.depth_widget.set_colors(self.colors)
         self.tab_widget.countdown_widget.set_colors(self.colors)
         self.tab_widget.term_widget.set_colors(self.colors)
@@ -365,6 +370,7 @@ class TabWidget(qtw.QWidget):
         self.ros_qt_bridge.new_cam_front_msg_sgl.connect(self.update_cam_front)
         self.ros_qt_bridge.new_debug_sgl.connect(self.update_debug)
         self.ros_qt_bridge.new_bme280_sgl.connect(self.update_bme280)
+        self.ros_qt_bridge.new_temperature_sgl.connect(self.update_temperature)
         self.ros_qt_bridge.new_pressure_msg_sgl.connect(self.update_pressure_msg)
     
         # Define layout of tabs
@@ -437,7 +443,7 @@ class TabWidget(qtw.QWidget):
         self.state_widget = StateWidget(tab, ["Bambi Mode", "Kill Button", "Reversed"], PATH + "/dash_styling/state_widget.txt", self.colors)
         self.com_shift_widget = TriNumericDataWidget(tab, "CoM Shift", PATH + "/dash_styling/tri_numeric_data_widget.txt", self.colors)
         self.thrt_crv_widget = ThrtCrvWidget(tab, self.colors)
-        self.temp_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.temperature_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.depth_widget = NumericDataWidget(tab, "Depth (m)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.pressure_sensor_widget = NumericDataWidget(tab, "Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.countdown_widget = CountdownWidget(tab, PATH + "/dash_styling/countdown_widget.txt", self.colors, minutes=15, seconds=0)
@@ -447,7 +453,7 @@ class TabWidget(qtw.QWidget):
         vert_widgets_layout.addWidget(self.state_widget, stretch=18)
         vert_widgets_layout.addWidget(self.com_shift_widget, stretch=8)
         vert_widgets_layout.addWidget(self.thrt_crv_widget, stretch=18)
-        vert_widgets_layout.addWidget(self.temp_widget, stretch=11)
+        vert_widgets_layout.addWidget(self.temperature_widget, stretch=11)
         vert_widgets_layout.addWidget(self.depth_widget, stretch=11)
         vert_widgets_layout.addWidget(self.countdown_widget, stretch=20)
 
@@ -557,6 +563,10 @@ class TabWidget(qtw.QWidget):
     def update_pressure_msg(self):
         self.depth_widget.update(self.ros_qt_bridge.pressure_msg.depth / 1000 + 0.06)  # Convert from mm to m, display to 3 decimal places
 
+    @qtc.pyqtSlot()
+    def update_temperature(self):
+        self.temperature_widget.update(self.ros_qt_bridge.temperature_msg)
+        
     def create_debug_tab(self, tab: qtw.QWidget):
         # Setup layouts
         debug_layout = qtw.QHBoxLayout(tab)
@@ -646,6 +656,7 @@ class Dash(Node):
         self.create_subscription(Image, "camera/down/image", ros_qt_bridge.callback_cam_down, 10)
         self.create_subscription(Image, "camera/back/image", ros_qt_bridge.callback_cam_back, 10)
         self.create_subscription(Image, "camera/front/image", ros_qt_bridge.callback_cam_front, 10)
+        self.create_subscription(Float32, "temperature", ros_qt_bridge.callback_temperature, 10)
         self.create_subscription(ParameterEvent, "parameter_events", ros_qt_bridge.callback_param_event, 10)
         self.create_subscription(PressureSensor, "pressure", ros_qt_bridge.callback_pressure, 10)
 
