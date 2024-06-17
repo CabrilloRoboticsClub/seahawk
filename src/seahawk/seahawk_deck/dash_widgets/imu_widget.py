@@ -20,8 +20,8 @@ class PaintWidget(qtw.QWidget):
         self.empty_up = colors["UP_EMPTY"]
         self.empty_down = colors["DOWN_EMPTY"]
 
-        self.coordinate_colors = colors["ACCENT"]
-        self.vector_colors = colors["TEXT_EMPH"]
+        self.coordinate_colors = colors["TEXT_EMPH"]
+        self.vector_colors = colors["ACCENT"]
 
     def set_colors(self, new_colors: dict):
         self.setStyleSheet(self.style_sheet.format(**new_colors))
