@@ -27,12 +27,16 @@ import sys
 import rclpy
 from rclpy.node import Node
 
+from std_msgs.msg import Float32
+
 from seahawk_rov.i2c_sensors.bno085 import BNO085
 from seahawk_rov.i2c_sensors.bme280 import BME280
 from seahawk_rov.i2c_sensors.pressure import Pressure
 
 import board
 import busio
+
+import smbus
 
 class I2C(Node):
     """
@@ -50,9 +54,17 @@ class I2C(Node):
         self.bme280 = BME280(self, i2c)  # Pressure, Temperature, Humidity
         self.pressure = Pressure(self)
 
+        self.i2c_bus = smbus.SMBus(1)
+        self.publisher = self.create_publisher(Float32, "temperature", 10)
+
         self.create_timer(0.1, self.pub_callback)
     
     def pub_callback(self):
+        msg = Float32()
+        data = self.i2c_bus.read_i2c_block_data(68, 0, 2)
+        msg.data = data[0] + (data[1] / 100)
+        self.publisher.publish(msg)
+
         self.bno085.pub_callback()
         self.bme280.pub_callback()
         self.pressure.pub_callback()
