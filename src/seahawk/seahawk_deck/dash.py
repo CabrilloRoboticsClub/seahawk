@@ -443,7 +443,7 @@ class TabWidget(qtw.QWidget):
         self.state_widget = StateWidget(tab, ["Bambi Mode", "Kill Button", "Reversed"], PATH + "/dash_styling/state_widget.txt", self.colors)
         self.com_shift_widget = TriNumericDataWidget(tab, "CoM Shift", PATH + "/dash_styling/tri_numeric_data_widget.txt", self.colors)
         self.thrt_crv_widget = ThrtCrvWidget(tab, self.colors)
-        self.temperature_widget = NumericDataWidget(tab, "Temperature", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
+        self.temperature_widget = NumericDataWidget(tab, "Temperature (C)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.depth_widget = NumericDataWidget(tab, "Depth (m)", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.pressure_sensor_widget = NumericDataWidget(tab, "Pressure", PATH + "/dash_styling/numeric_data_widget.txt", self.colors)
         self.countdown_widget = CountdownWidget(tab, PATH + "/dash_styling/countdown_widget.txt", self.colors, minutes=15, seconds=0)
@@ -565,7 +565,7 @@ class TabWidget(qtw.QWidget):
 
     @qtc.pyqtSlot()
     def update_temperature(self):
-        self.temperature_widget.update(self.ros_qt_bridge.temperature_msg)
+        self.temperature_widget.update(self.ros_qt_bridge.temperature_msg.data)
         
     def create_debug_tab(self, tab: qtw.QWidget):
         # Setup layouts
