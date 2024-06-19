@@ -60,10 +60,13 @@ class I2C(Node):
         self.create_timer(0.1, self.pub_callback)
     
     def pub_callback(self):
-        msg = Float32()
-        data = self.i2c_bus.read_i2c_block_data(68, 0, 2)
-        msg.data = data[0] + (data[1] / 100)
-        self.publisher.publish(msg)
+        try:
+            msg = Float32()
+            data = self.i2c_bus.read_i2c_block_data(68, 0, 2)
+            msg.data = data[0] + (data[1] / 100)
+            self.publisher.publish(msg)
+        except:
+            self.get_logger.info("Warning: Temperature failed to publish\n")
 
         self.bno085.pub_callback()
         self.bme280.pub_callback()
